@@ -2,7 +2,7 @@
 
 > **Human-AI Symbiosis Evolution System** - Growing together through collaboration
 
- **Language / 语言**: [English](README.md) | [中文](README.zh-CN.md)
+🌐 **Language / 语言**: [English](README.md) | [中文](README.zh-CN.md)
 
 ![Evolution Banner](https://img.shields.io/badge/Evolution-Human--AI_Symbiosis-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -24,7 +24,7 @@
 
 ---
 
-## 🎯 Pain Points & Vision
+##  Pain Points & Vision
 
 ### Problem 1: AI's "Amnesia"
 
@@ -88,7 +88,7 @@
 **Evolution's Solution**:
 
 ```
-─────────────────────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────────────────┐
 │  Evolution Mode: Human-AI Co-Growth                         │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
@@ -134,13 +134,13 @@
 │     ↓                                                       │
 │  [Background] Alignment Agent detects GUI changes           │
 │     ↓                                                       │
-│  AI: ️ Modified styles, but I can't verify visuals,        │
+│  AI: ⚠️ Modified styles, but I can't verify visuals,        │
 │      please check in browser                                │
 │     ↓                                                       │
 │  User: Opens browser, confirms, finds issues                │
 │     ↓                                                       │
 │  Result: Catch issues early, avoid rework                   │
-─────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -157,13 +157,13 @@
 │  ┌─────────────────┐                                        │
 │  │   kb-index.md   │  ← Auto-loaded at conversation start  │
 │  │                 │                                        │
-│  │  📊 Overview    │  ← Tells AI what info is available    │
+│  │   Overview    │  ← Tells AI what info is available    │
 │  │  📁 Summary     │  ← Guides AI to load details on demand│
-│  └────────────────                                         │
+│  └─────────────────┘                                        │
 │           │                                                 │
 │           ↓ Load on demand                                  │
 │                                                             │
-│  ┌─────────────────┐  ─────────────────┐                  │
+│  ┌─────────────────┐  ┌─────────────────┐                  │
 │  │    facts.md     │  │  pitfalls.md    │  ← Detail files │
 │  │                 │  │                 │                  │
 │  │  • Env config   │  │  • Error modes  │                  │
@@ -213,25 +213,25 @@
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  evolution-manual/              evolution-auto/             │
-│  ┌──────────────────┐          ┌──────────────────┐         │
+│  ┌──────────────────┐          ──────────────────┐         │
 │  │ Manual Trigger   │          │ Auto Trigger     │         │
 │  │                  │          │                  │         │
 │  │ Trigger: /evolution│        │ Trigger: Every 5 rounds│   │
 │  │ Tag: manual      │          │ Tag: auto        │         │
-│  ──────────────────┘          └──────────────────┘         │
+│  └──────────────────┘          └──────────────────┘         │
 │                                                             │
 │  Comparison Dimensions:                                     │
-│  ┌────────────────────────────┬──────────────┐            │
+│  ┌──────────────┬──────────────┬──────────────┐            │
 │  │ Dimension    │ Manual       │ Auto         │            │
-│  ├────────────────────────────┼──────────────┤            │
+│  ├──────────────┼──────────────┼──────────────┤            │
 │  │ Frequency    │ User decides │ Fixed 5 rnds │            │
 │  │ Quality      │ Selective    │ Fixed logic  │            │
 │  │ Completeness │ May miss     │ More systematic│          │
 │  │ Awareness    │ Aware        │ Unaware      │            │
-│  ──────────────┴──────────────┴──────────────┘            │
+│  └──────────────┴──────────────┴──────────────┘            │
 │                                                             │
 │  Goal: Find optimal solution through comparison             │
-─────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -273,7 +273,7 @@ evolution-manual/
 
 ---
 
-## 🤖 Three Background Agents
+##  Three Background Agents
 
 ### 1. Knowledge Base Agent
 
@@ -329,7 +329,7 @@ evolution-manual/
 ### 3. Alignment Agent
 
 ```
-┌─────────────────────────────────────────────────────────────┐
+─────────────────────────────────────────────────────────────┐
 │                 Alignment Agent                              │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
@@ -347,7 +347,7 @@ evolution-manual/
 │                                                             │
 │  Priority Classification:                                   │
 │  🔴 High: Security, irreversible (handle immediately)       │
-│   Medium: Feature review, decisions (this round)          │
+│  🟡 Medium: Feature review, decisions (this round)          │
 │  🟢 Low: Optimization suggestions (later)                   │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -375,7 +375,7 @@ User inputs /evolution
 │  3. Wait for completion, collect summaries                  │
 │                                                             │
 │  4. Report to user                                          │
-─────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────┘
     ↓
 Evolution sync complete:
 - KB: +3 facts, +1 pitfall, +2 state updates
@@ -388,7 +388,7 @@ Evolution sync complete:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Conversation Process                     │
-└────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────┘
                          │
                          ↓
               ┌──────────────────────┐
@@ -401,7 +401,7 @@ Evolution sync complete:
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
 │ Knowledge    │ │   Growth     │ │  Alignment   │
 │ Base Agent   │ │   Agent      │ │   Agent      │
-└──────┬───────┘ └──────┬───────┘ └──────┬───────┘
+└─────────────┘ └──────┬───────┘ └──────┬───────┘
        │                │                │
        ↓                ↓                ↓
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
@@ -409,14 +409,14 @@ Evolution sync complete:
 │ pitfalls.md  │ │ notes.md     │ │ decisions.md │
 │ state.md     │ │ prompt-      │ │              │
 │              │ │ improvements │ │              │
-└──────────────┘ └──────────────┘ └──────────────┘
+└──────────────┘ ──────────────┘ └──────────────┘
        │                │                │
-       └────────────────┼────────────────┘
+       └────────────────┼────────────────
                         ↓
               ┌──────────────────────┐
               │   kb-index.md        │
               │   (Index file)       │
-              └──────────┬───────────┘
+              ──────────┬───────────┘
                          │
                          ↓
               ┌──────────────────────┐
@@ -503,14 +503,14 @@ MIT License - See [LICENSE](LICENSE) for details
 
 ## 👤 Author
 
-**lemen**
+**Evolution Team**
 
 - Project Inspiration: Real pain points in human-AI collaboration
 - Design Philosophy: Growing together through collaboration
 
 ---
 
-##  Star History
+## 🌟 Star History
 
 If this project helps you, please give us a ⭐ Star!
 
