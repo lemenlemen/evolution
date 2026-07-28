@@ -2,11 +2,14 @@
 
 > **Human-AI Symbiosis Evolution System** - Growing together through collaboration
 
+**Version**: v3.0.0 (2026-07-28)
+
 🌐 **Language / 语言**: [English](README.md) | [中文](README.zh-CN.md)
 
 ![Evolution Banner](https://img.shields.io/badge/Evolution-Human--AI_Symbiosis-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-purple)
+![Version](https://img.shields.io/badge/version-3.0.0-blue)
 
 ---
 
@@ -212,7 +215,7 @@
 │                  Dual System Design                         │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  evolution-manual/              evolution-auto/             │
+│  evolution/              evolution-auto/             │
 │  ──────────────────┐          ┌──────────────────┐         │
 │  │ Manual Trigger   │          │ Auto Trigger     │         │
 │  │                  │          │                  │         │
@@ -241,11 +244,7 @@
 ### Directory Structure
 
 ```
-evolution-manual/
-├── agents/                          # Agent specifications
-│   ├── knowledge-base-agent.md      # Knowledge extraction
-│   ├── growth-agent.md              # Human growth
-│   └── alignment-agent.md           # Human-AI alignment
+evolution/
 │
 └── knowledge-base/                  # Knowledge base data
     ├── kb-index.md                  # Index file (auto-loaded)
@@ -431,11 +430,11 @@ Evolution sync complete:
 
 ### 1. Installation
 
-Copy `evolution-manual/` and `.claude/` directories to your project root:
+Copy `evolution/` and `.claude/` directories to your project root:
 
 ```bash
 # Copy to your project
-cp -r evolution-manual/ <your-project>/
+cp -r evolution/ <your-project>/
 cp -r .claude/ <your-project>/
 cp CLAUDE.md <your-project>/
 ```
@@ -453,7 +452,7 @@ Open Claude Code in your project, then:
 
 ### 3. View Results
 
-After Agent execution, check `evolution-manual/knowledge-base/` directory:
+After Agent execution, check `evolution/knowledge-base/` directory:
 
 - `kb-index.md` - Index file
 - `facts.md` - Key facts

@@ -2,11 +2,14 @@
 
 > **人机共生进化系统** - 让 AI 和人类在协作中共同成长
 
+**版本**: v3.0.0 (2026-07-28)
+
 🌐 **Language / 语言**: [English](README.md) | [中文](README.zh-CN.md)
 
 ![Evolution Banner](https://img.shields.io/badge/Evolution-Human--AI_Symbiosis-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-purple)
+![版本](https://img.shields.io/badge/版本-3.0.0-blue)
 
 ---
 
@@ -209,7 +212,7 @@
 │                    双系统设计                                │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  evolution-manual/              evolution-auto/             │
+│  evolution/              evolution-auto/             │
 │  ┌──────────────────┐          ──────────────────┐         │
 │  │  手动触发系统     │          │  自动触发系统     │         │
 │  │                  │          │                  │         │
@@ -238,11 +241,7 @@
 ### 目录结构
 
 ```
-evolution-manual/
-├── agents/                          # Agent 规格说明
-│   ├── knowledge-base-agent.md      # 知识提取 Agent
-│   ├── growth-agent.md              # 人类成长 Agent
-│   └── alignment-agent.md           # 人机对齐 Agent
+evolution/
 │
 ── knowledge-base/                  # 知识库数据
     ├── kb-index.md                  # 索引文件（AI 对话开始时读取）
@@ -428,11 +427,11 @@ Evolution 同步完成：
 
 ### 1. 安装
 
-将 `evolution-manual/` 和 `.claude/` 目录复制到你的项目根目录：
+将 `evolution/` 和 `.claude/` 目录复制到你的项目根目录：
 
 ```bash
 # 复制到你的项目
-cp -r evolution-manual/ <你的项目>/
+cp -r evolution/ <你的项目>/
 cp -r .claude/ <你的项目>/
 cp CLAUDE.md <你的项目>/
 ```
@@ -450,7 +449,7 @@ cp CLAUDE.md <你的项目>/
 
 ### 3. 查看结果
 
-Agent 执行后，查看 `evolution-manual/knowledge-base/` 目录：
+Agent 执行后，查看 `evolution/knowledge-base/` 目录：
 
 - `kb-index.md` - 索引文件
 - `facts.md` - 关键事实
