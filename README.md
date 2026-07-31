@@ -1,29 +1,30 @@
 # Evolution System
 
-> **Human-AI Symbiosis Evolution System** - Growing together through collaboration
+> **Human-AI Symbiosis Evolution System** — Growing together through collaboration
 
-**Version**: v3.0.0 (2026-07-28)
+**Version**: v3.3.0 (2026-07-31)
 
 🌐 **Language / 语言**: [English](README.md) | [中文](README.zh-CN.md)
 
 ![Evolution Banner](https://img.shields.io/badge/Evolution-Human--AI_Symbiosis-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-purple)
-![Version](https://img.shields.io/badge/version-3.0.0-blue)
+![Version](https://img.shields.io/badge/version-3.3.0-blue)
 
 ---
 
 ## Table of Contents
 
-- [Pain Points & Vision](#pain-points--vision)
-- [Core Principles](#core-principles)
-- [System Architecture](#system-architecture)
-- [Three Background Agents](#three-background-agents)
-- [Workflow](#workflow)
-- [Quick Start](#quick-start)
-- [Design Philosophy](#design-philosophy)
-- [Contributing](#contributing)
-- [License](#license)
+- [Pain Points & Vision](#-pain-points--vision)
+- [Core Principles](#-core-principles)
+- [System Architecture](#-system-architecture)
+- [Execution Model](#-execution-model)
+- [Workflow](#-workflow)
+- [Quick Start](#-quick-start)
+- [Documentation](#-documentation)
+- [Design Philosophy](#-design-philosophy)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
@@ -59,7 +60,7 @@
 │                                                             │
 │  Round 1: User says "Project uses Python 3.11"              │
 │     ↓                                                       │
-│  [Background] Knowledge Base Agent records to facts.md      │
+│  [Background] Sub-agent records to facts.md                 │
 │     ↓                                                       │
 │  Round 10: AI reads facts.md, knows it's 3.11               │
 │     ↓                                                       │
@@ -99,7 +100,7 @@
 │     ↓                                                       │
 │  AI: Fixed                                                  │
 │     ↓                                                       │
-│  [Background] Growth Agent generates learning notes         │
+│  [Background] Sub-agent generates learning notes            │
 │     ↓                                                       │
 │  AI: Explains "This bug is because XXX, fixed by YYY"       │
 │     ↓                                                       │
@@ -118,7 +119,7 @@
 │                                                             │
 │  AI: I modified the login page styles                       │
 │     ↓                                                       │
-│  AI: ✅ Done (verified at code level)                       │
+│  AI: Done (verified at code level)                          │
 │     ↓                                                       │
 │  User: Opens browser, styles are completely wrong!          │
 │     ↓                                                       │
@@ -131,13 +132,13 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Evolution Mode: Maintain Human-AI Alignment                │
-─────────────────────────────────────────────────────────────┤
+├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  AI: I modified the login page styles                       │
 │     ↓                                                       │
-│  [Background] Alignment Agent detects GUI changes           │
+│  [Background] Sub-agent flags items needing review          │
 │     ↓                                                       │
-│  AI: ️ Modified styles, but I can't verify visuals,        │
+│  AI: Modified styles, but I can't verify visuals,           │
 │      please check in browser                                │
 │     ↓                                                       │
 │  User: Opens browser, confirms, finds issues                │
@@ -158,11 +159,11 @@
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌─────────────────┐                                        │
-│  │   kb-index.md   │  ← Auto-loaded at conversation start  │
+│  │   kb-index.md   │  ← Read on demand (not auto-loaded)   │
 │  │                 │                                        │
-│  │  📊 Overview    │  ← Tells AI what info is available    │
-│  │  📁 Summary     │  ← Guides AI to load details on demand│
-│  ────────────────┘                                        │
+│  │  Overview       │  ← Tells AI what info is available    │
+│  │  Summary        │  ← Guides AI to load details on demand│
+│  └─────────────────┘                                        │
 │           │                                                 │
 │           ↓ Load on demand                                  │
 │                                                             │
@@ -208,32 +209,25 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Principle 3: Dual System Comparison (A/B Testing)
+### Principle 3: Manual Review (Write Audit)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  Dual System Design                         │
+│                Write Audit Mechanism                        │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  evolution/              evolution-auto/             │
-│  ──────────────────┐          ┌──────────────────┐         │
-│  │ Manual Trigger   │          │ Auto Trigger     │         │
-│  │                  │          │                  │         │
-│  │ Trigger: /evolution│        │ Trigger: Every 5 rounds│   │
-│  │ Tag: manual      │          │ Tag: auto        │         │
-│  └──────────────────┘          └──────────────────┘         │
+│  Every new entry gets a status tag:                         │
 │                                                             │
-│  Comparison Dimensions:                                     │
-│  ┌────────────────────────────┬──────────────┐            │
-│  │ Dimension    │ Manual       │ Auto         │            │
-│  ├────────────────────────────┼──────────────┤            │
-│  │ Frequency    │ User decides │ Fixed 5 rnds │            │
-│  │ Quality      │ Selective    │ Fixed logic  │            │
-│  │ Completeness │ May miss     │ More systematic│          │
-│  │ Awareness    │ Aware        │ Unaware      │            │
-│  └──────────────┴──────────────┴──────────────┘            │
+│  [D] Draft     — AI extracted, not yet verified             │
+│  [V] Verified  — User confirmed or tool-validated           │
+│  [X] Deprecated — Wrong or superseded                       │
 │                                                             │
-│  Goal: Find optimal solution through comparison             │
+│  Read priority:                                             │
+│  1. [V] entries are trusted                                 │
+│  2. [D] entries are usable but marked "unverified"          │
+│  3. [X] entries are never read                              │
+│                                                             │
+│  Goal: Prevent AI error self-reinforcement                  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -244,17 +238,40 @@
 ### Directory Structure
 
 ```
-evolution/
+<your-project>/
 │
-└── knowledge-base/                  # Knowledge base data
-    ├── kb-index.md                  # Index file (auto-loaded)
-    ├── facts.md                     # Key facts
-    ├── pitfalls.md                  # Pitfalls
-    ├── state.md                     # Current state
-    ├── growth-notes.md              # Learning notes
-    ├── prompt-improvements.md       # Prompt improvements
-    ├── alignment.md                 # Alignment checklist
-    ── decisions.md                 # Decision log
+├── .claude/
+│   └── skills/
+│       └── evolution/
+│           └── SKILL.md                     # Skill definition (AI reads)
+│
+├── evolution/                                # Knowledge base
+│   └── knowledge-base/
+│       ├── kb-index.md                       # Index file
+│       ├── facts.md                          # Key facts
+│       ├── pitfalls.md                       # Pitfalls
+│       ├── state.md                          # Current state
+│       ├── growth-notes.md                   # Learning notes
+│       ├── prompt-improvements.md            # Prompt improvements
+│       ├── alignment.md                      # Alignment checklist
+│       └── decisions.md                      # Decision log
+│
+└── docs/                                     # Bilingual documentation
+    ├── README.md                             # Documentation index (EN)
+    ├── README.zh-CN.md                       # Documentation index (ZH)
+    ├── PROJECT_BACKGROUND.md                 # Project background
+    ├── INSTALLATION_GUIDE.md                 # Installation guide
+    ├── VERSION_HISTORY.md                    # Version history
+    ├── DESIGN_V3.1.0.md                      # Design document
+    ├── EVOLUTION_RULES_AND_LOGIC_V3.md       # System rules
+    ├── EXPORT_AND_ANALYSIS_DESIGN.md         # Export design (v3.3.0)
+    ├── *.zh-CN.md                            # Chinese versions of above
+    ├── agents/                               # Agent configuration
+    │   ├── domain.md
+    │   ├── issue-tracker.md
+    │   └── triage-labels.md
+    └── archive/                              # Historical docs (V1/V2)
+        └── ...
 ```
 
 ### File Responsibilities
@@ -272,84 +289,57 @@ evolution/
 
 ---
 
-## 🤖 Three Background Agents
+## 🤖 Execution Model
 
-### 1. Knowledge Base Agent
+> **All Evolution operations run as sub-agents to minimize main-session pollution.**
+
+### How It Works
 
 ```
+User inputs /evolution
+    ↓
 ┌─────────────────────────────────────────────────────────────┐
-│              Knowledge Base Agent                            │
-├─────────────────────────────────────────────────────────────┤
+│  Main Agent (Scheduler)                                     │
 │                                                             │
-│  Trigger: Every 5 rounds                                    │
+│  1. Receive user command                                    │
+│  2. Trigger sub-agent in background                         │
+│  3. Display sub-agent summary when done                     │
+│  4. Does NOT directly operate the knowledge base            │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ triggers
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Sub-Agent (Background Worker)                              │
 │                                                             │
-│  Input: Last 5 rounds of conversation                       │
-│     ↓                                                       │
-│  Processing:                                                │
-│  ├── Extract key facts → facts.md                           │
-│  ├── Extract pitfalls → pitfalls.md                         │
-│  ├── Update state → state.md                                │
-│  └── Update index → kb-index.md                             │
-│                                                             │
-│  Output: 1-line summary                                     │
-│  `KB: +3 facts, +1 pitfall, +2 state updates`               │
-│                                                             │
-│  Dedup Rules:                                               │
-│  - Same info → Update timestamp                             │
-│  - New info → Append                                        │
+│  1. Read conversation context                               │
+│  2. Extract knowledge                                       │
+│  3. Write to knowledge base                                 │
+│  4. Return summary to main agent                            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2. Growth Agent
+### Available Commands
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                  Growth Agent                                │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Trigger: Every 10 rounds                                   │
-│                                                             │
-│  Input: Last 10 rounds of conversation                      │
-│     ↓                                                       │
-│  Processing:                                                │
-│  ├── Identify teaching opportunities → growth-notes.md      │
-│  └── Analyze questioning style → prompt-improvements.md     │
-│                                                             │
-│  Output: 1-line summary                                     │
-│  `Growth: +2 notes, +1 prompt tip`                          │
-│                                                             │
-│  Teaching Value Assessment:                                 │
-│  🔴 High: User explicitly asks, recurring concepts          │
-│  🟡 Medium: Related but not core                            │
-│  🟢 Low: Edge concepts (skip)                               │
-└─────────────────────────────────────────────────────────────┘
-```
+| Command | Description |
+|---------|-------------|
+| `/evolution` | Full sync (all knowledge extraction) |
+| `/evolution init` | Initial sync — analyze full conversation history, build knowledge base from scratch |
+| `/evolution --history` | Analyze persisted conversation history files (cross-session) |
+| `/kb-sync` | Sync knowledge base only |
+| `/growth-sync` | Generate learning notes only |
+| `/alignment-sync` | Check alignment items only |
 
-### 3. Alignment Agent
+### Conversation Export Methods
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 Alignment Agent                              │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Trigger: Every 5 rounds + Instant                          │
-│                                                             │
-│  Input: Last 5 rounds of conversation                       │
-│     ↓                                                       │
-│  Processing:                                                │
-│  ├── Identify review items → alignment.md                   │
-│  ├── Identify decision points → decisions.md                │
-│  └── Flag high-risk operations → Instant alert              │
-│                                                             │
-│  Output: 1-line summary                                     │
-│  `Alignment: +1 audit, +0 decisions`                        │
-│                                                             │
-│  Priority Classification:                                   │
-│  🔴 High: Security, irreversible (handle immediately)       │
-│  🟡 Medium: Feature review, decisions (this round)          │
-│  🟢 Low: Optimization suggestions (later)                   │
-└─────────────────────────────────────────────────────────────┘
-```
+**Method A: AI Memory (default)**
+- Sub-agent analyzes current session's conversation context
+- Simple, real-time, no extra files needed
+- Limited to current session
+
+**Method B: File Record (optional)**
+- Sub-agent reads `.claude/.tmp/conversation-*.md` files
+- Persistent, traceable, supports cross-session analysis
+- Requires conversation export files
 
 ---
 
@@ -360,99 +350,110 @@ evolution/
 ```
 User inputs /evolution
     ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Main Agent (Scheduler)                                     │
-│                                                             │
-│  1. Export full conversation to temp file                   │
-│     `.claude/.tmp/conv-export-{timestamp}.md`               │
-│                                                             │
-│  2. Launch 3 Sub-Agents in parallel                         │
-│     ├── Knowledge Base Sub-Agent                            │
-│     ├── Growth Sub-Agent                                    │
-│     └── Alignment Sub-Agent                                 │
-│                                                             │
-│  3. Wait for completion, collect summaries                  │
-│                                                             │
-│  4. Report to user                                          │
-└─────────────────────────────────────────────────────────────┘
+Main Agent → Sub-Agent (background)
     ↓
-Evolution sync complete:
-- KB: +3 facts, +1 pitfall, +2 state updates
-- Growth: +2 notes, +1 prompt tip
-- Alignment: +1 audit, +0 decisions
+Sub-Agent:
+  ├── Read conversation context
+  ├── Read kb-index.md (understand existing knowledge)
+  ├── Extract knowledge
+  │   ├── Key facts → facts.md
+  │   ├── Pitfalls → pitfalls.md
+  │   ├── State changes → state.md
+  │   ├── Learning points → growth-notes.md
+  │   ├── Prompt improvements → prompt-improvements.md
+  │   ├── Alignment items → alignment.md
+  │   └── Decisions → decisions.md
+  ├── Deduplicate with existing knowledge
+  ├── Update kb-index.md
+  └── Return summary
+    ↓
+Main Agent displays summary:
+  "Sync complete: +3 facts, +1 pitfall, +2 state updates"
 ```
 
 ### Information Flow
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Conversation Process                     │
-└────────────────────────────────────────────────────────────┘
-                         │
-                         ↓
-              ┌──────────────────────┐
-              │  Conversation History│
-              │  (Last 5/10 rounds)  │
-              └──────────┬───────────┘
-                         │
-         ┌───────────────┼───────────────┐
-         ↓               ↓               ↓
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│ Knowledge    │ │   Growth     │ │  Alignment   │
-│ Base Agent   │ │   Agent      │ │   Agent      │
-└──────┬───────┘ └──────┬───────┘ └──────┬───────
-       │                │                │
-       ↓                ↓                ↓
-┌──────────────┐ ──────────────┐ ┌──────────────┐
-│  facts.md    │ │ growth-      │ │ alignment.md │
-│ pitfalls.md  │ │ notes.md     │ │ decisions.md │
-│ state.md     │ │ prompt-      │ │              │
-│              │ │ improvements │ │              │
-└──────────────┘ └──────────────┘ └──────────────┘
-       │                │                │
-       └────────────────┼────────────────┘
-                        ↓
-              ┌──────────────────────┐
-              │   kb-index.md        │
-              │   (Index file)       │
-              └──────────┬───────────┘
-                         │
-                         ↓
-              ┌──────────────────────┐
-              │  AI reads index on   │
-              │  next conversation   │
-              └──────────────────────┘
+┌──────────────────────┐
+│  Conversation Context│
+│  (current session)   │
+└──────────┬───────────┘
+           │
+           ↓
+    ┌──────────────┐
+    │  Sub-Agent   │
+    │  (background)│
+    └──────┬───────┘
+           │
+           ↓
+┌──────────────────────────────────────────┐
+│  Knowledge Base (8 .md files)            │
+│                                          │
+│  facts.md  pitfalls.md  state.md         │
+│  growth-notes.md  prompt-improvements.md │
+│  alignment.md  decisions.md              │
+└──────────────────────────────────────────┘
+           │
+           ↓
+┌──────────────────────┐
+│   kb-index.md        │
+│   (updated)          │
+└──────────┬───────────┘
+           │
+           ↓
+┌──────────────────────┐
+│  AI reads index on   │
+│  next conversation   │
+└──────────────────────┘
 ```
 
 ---
 
-##  Quick Start
+## 🚀 Quick Start
 
 ### 1. Installation
 
-Copy `evolution/` and `.claude/` directories to your project root:
+**Option A: Copy from this repo**
 
 ```bash
-# Copy to your project
+# Clone the repo
+git clone https://github.com/lemenlemen/evolution.git
+cd evolution
+
+# Copy skill and knowledge-base to your project
+cp -r .claude/skills/evolution/ <your-project>/.claude/skills/
 cp -r evolution/ <your-project>/
-cp -r .claude/ <your-project>/
-cp CLAUDE.md <your-project>/
 ```
+
+**Option B: Download SKILL.md directly**
+
+```bash
+# Create skill directory
+mkdir -p .claude/skills/evolution
+
+# Download SKILL.md
+curl -o .claude/skills/evolution/SKILL.md \
+  https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/skills/evolution/SKILL.md
+
+# Create knowledge-base directory with templates
+mkdir -p evolution/knowledge-base
+# (copy template files from the repo)
+```
+
+See [Installation Guide](docs/INSTALLATION_GUIDE.md) for full instructions.
 
 ### 2. Usage
 
 Open Claude Code in your project, then:
 
 ```bash
-/evolution          # Execute all three Agents
-/kb-sync            # Sync knowledge base only
-/growth-sync        # Generate learning notes only
-/alignment-sync     # Check alignment only
+/evolution init   # First time: analyze full conversation, build knowledge base
+/evolution        # Subsequent: incremental sync
 ```
 
 ### 3. View Results
 
-After Agent execution, check `evolution/knowledge-base/` directory:
+After execution, check `evolution/knowledge-base/` directory:
 
 - `kb-index.md` - Index file
 - `facts.md` - Key facts
@@ -461,6 +462,38 @@ After Agent execution, check `evolution/knowledge-base/` directory:
 - `growth-notes.md` - Learning notes
 - `alignment.md` - Alignment checklist
 - `decisions.md` - Decision log
+
+---
+
+## 📚 Documentation
+
+Full bilingual documentation is in the [`docs/`](docs/) directory.
+
+### For New Users
+
+1. [Project Background](docs/PROJECT_BACKGROUND.md) — understand the pain points
+2. [Installation Guide](docs/INSTALLATION_GUIDE.md) — get set up
+3. [Design Document](docs/DESIGN_V3.1.0.md) — learn design details
+
+### For Upgrading Users
+
+1. [Version History](docs/VERSION_HISTORY.md) — check what changed
+2. [Installation Guide](docs/INSTALLATION_GUIDE.md) — upgrade steps
+
+### For Developers
+
+1. [Design Document](docs/DESIGN_V3.1.0.md)
+2. [System Rules](docs/EVOLUTION_RULES_AND_LOGIC_V3.md)
+3. [Export & Analysis Design](docs/EXPORT_AND_ANALYSIS_DESIGN.md) (v3.3.0)
+4. [Historical docs](docs/archive/) (V1/V2 era)
+
+### Chinese Versions
+
+All documents have `.zh-CN.md` Chinese counterparts:
+- [中文文档索引](docs/README.zh-CN.md)
+- [项目背景](docs/PROJECT_BACKGROUND.zh-CN.md)
+- [安装指南](docs/INSTALLATION_GUIDE.zh-CN.md)
+- etc.
 
 ---
 
@@ -476,8 +509,9 @@ Evolution is not an additional burden, but a natural byproduct of task execution
 |-----------|-------------|
 | **Task First** | Primary goal is task completion, not running the system |
 | **Natural Occurrence** | Learning and sedimentation happen naturally during task execution |
-| **Human Unaware** | Run in background, don't interfere with main conversation |
+| **Sub-Agent Isolation** | Run in background, don't pollute main conversation |
 | **Gradual Growth** | Both AI and human grow through collaboration |
+| **Honest & Transparent** | AI honestly reports limitations and issues |
 
 ---
 
@@ -487,7 +521,7 @@ Contributions are welcome! Submit Issues and Pull Requests!
 
 ### Contribution Areas
 
--  **Bug Fixes**
+- 🐛 **Bug Fixes**
 - ✨ **New Features**
 - 📚 **Documentation Improvements**
 - 💡 **Use Case Sharing**
@@ -500,9 +534,9 @@ MIT License - See [LICENSE](LICENSE) for details
 
 ---
 
-##  Author
+## 👤 Author
 
-**Evolution Team**
+**lemen**
 
 - Project Inspiration: Real pain points in human-AI collaboration
 - Design Philosophy: Growing together through collaboration
@@ -511,7 +545,7 @@ MIT License - See [LICENSE](LICENSE) for details
 
 ## 🌟 Star History
 
-If this project helps you, please give us a ⭐ Star!
+If this project helps you, please give it a ⭐ Star!
 
 ---
 
