@@ -1,64 +1,100 @@
-# Evolution 版本历史
+# Evolution Version History
 
-> 本文档记录 Evolution 系统的所有版本变更
-
----
-
-## 版本格式
-
-采用**语义化版本（Semantic Versioning 2.0.0）**：
-
-```
-MAJOR.MINOR.PATCH
-```
-
-- **MAJOR**：重大架构变化（不兼容的变更）
-- **MINOR**：新功能（向下兼容）
-- **PATCH**：小修补、bug 修复
+> **Current Version**: 3.3.0
+> **Release Date**: 2026-07-31
 
 ---
 
-## 版本记录
+## Version Changes Overview
 
-### [3.0.0] - 2026-07-28
+| Version | Date | Major Changes |
+|---------|------|---------------|
+| v3.3.0 | 2026-07-31 | Fixed JSON serialization crash, incremental unit drift, Windows encoding, token estimation bias (CJK coefficient 1.5→1.0), cleanup safety, file handle leaks, and other issues |
+| v3.2.1 | 2026-07-30 | Updated pagination parameter: 80K → 150K (based on attention research) |
+| v3.2.0-draft | 2026-07-29 | Initial design, based on 200K window assumption |
+| v3.1.0 | 2026-07-29 | Added init command, conversation export mechanism, sub agent execution design |
+| v3.0.0 | 2026-07-28 | Simplified system, removed auto version, added write review mechanism |
+| v2.1.0 | 2026-07-28 | Write review mechanism (status markers) |
+| v2.0.0 | 2026-07-28 | Skill system migration |
+| v1.0.0 | 2026-07-21 | Initial release |
 
-**重大变更**：
-- 删除 `evolution-auto/` 目录（自动触发版本）
-- 知识库目录从 `evolution-manual/` 改为 `evolution/`
-- 简化系统，只保留手动触发版本
+---
 
-**修改原因**：
-- 所有内容都必须人工核对
-- 人类也要读取文档学习
-- 自动触发版本未经实战检验
-- 简化系统，减少复杂度
+## v3.1.0 (2026-07-29)
 
-**修改文件**：
-- 删除 `evolution-auto/` 目录
-- 重命名 `evolution-manual/` → `evolution/`
+### New Features
+
+1. **Init Command**
+   - Added `/evolution init` command
+   - Analyzes all historical conversations after first installation
+   - Generates initial knowledge base
+
+2. **Conversation Export Mechanism**
+   - Method A: AI memory (default)
+   - Method B: File recording (optional)
+
+3. **Sub Agent Execution Design**
+   - All operations executed by sub agents
+   - Reduces pollution to the main session
+
+### Design Document Changes
+
+1. **CLAUDE.md**
+   - Created project configuration file
+   - Defined knowledge base location
+
+2. **SKILL.md**
+   - Updated to v3.1.0
+   - Added init command
+   - Added conversation export mechanism
+   - Emphasized sub agent execution principle
+
+3. **DESIGN_V3.1.0.md**
+   - Created new design document
+   - Detailed design considerations
+   - Described document responsibility division
+
+---
+
+## v3.0.0 (2026-07-28)
+
+**Breaking Changes**:
+- Removed `evolution-auto/` directory (auto-trigger version)
+- Renamed knowledge base directory from `evolution-manual/` to `evolution/`
+- Simplified system, keeping only the manual trigger version
+
+**Reason for Changes**:
+- All content must be manually verified
+- Humans also need to read documents for learning
+- Auto-trigger version was not battle-tested
+- Simplify the system and reduce complexity
+
+**Modified Files**:
+- Deleted `evolution-auto/` directory
+- Renamed `evolution-manual/` → `evolution/`
 - `.claude/skills/evolution/SKILL.md`
-  - 版本号：2.1.0 → 3.0.0
-  - 去掉"自动触发"章节
-  - 去掉"手动触发"标题（只有一种了）
-  - 更新知识库位置：`evolution-manual/` → `evolution/`
-  - 新增核心原则：人工审核
+  - Version number: 2.1.0 → 3.0.0
+  - Removed "auto trigger" section
+  - Removed "manual trigger" heading (only one version now)
+  - Updated knowledge base location: `evolution-manual/` → `evolution/`
+  - Added core principle: manual review
 - `evolution/knowledge-base/kb-index.md`
-  - 版本号：2.1.0 → 3.0.0
-  - 去掉"手动触发"标记
-  - 更新位置信息
+  - Version number: 2.1.0 → 3.0.0
+  - Removed "manual trigger" markers
+  - Updated location information
 
-**向后兼容**：
-- ❌ 不兼容（目录结构变化）
-- ️ 需要迁移现有知识库
+**Backward Compatibility**:
+- ❌ Not compatible (directory structure changes)
+- ️ Existing knowledge base needs migration
 
-**迁移指南**：
+**Migration Guide**:
 ```bash
-# 1. 重命名目录
+# 1. Rename directory
 mv evolution-manual evolution
 
-# 2. 更新 SKILL.md 中的路径引用（已自动完成）
+# 2. Update path references in SKILL.md (done automatically)
 
-# 3. 验证
+# 3. Verify
 /evolution
 ```
 
@@ -66,136 +102,133 @@ mv evolution-manual evolution
 
 ### [2.1.0] - 2026-07-28
 
-**新增功能**：
-- 添加写入审核机制（状态标记）
-- 新条目默认标记为 `[D]`（draft）
-- 用户确认后标记为 `[V]`（verified）
-- 废弃条目标记为 `[X]`（deprecated）
+**New Features**:
+- Added write review mechanism (status markers)
+- New entries default to `[D]` (draft)
+- User-confirmed entries marked as `[V]` (verified)
+- Deprecated entries marked as `[X]` (deprecated)
 
-**修改文件**：
+**Modified Files**:
 - `.claude/skills/evolution/SKILL.md`
-  - 新增"写入规则（审核机制）"章节
-  - 定义三级状态模型（draft/verified/deprecated）
-  - 明确写入规则和冲突处理
+  - Added "Write Rules (Review Mechanism)" section
+  - Defined three-tier status model (draft/verified/deprecated)
+  - Clarified write rules and conflict handling
   
 - `evolution-manual/knowledge-base/kb-index.md`
-  - 新增"读取指南（AI 必须遵守）"章节
-  - 定义状态标记说明
-  - 明确使用规则（优先级、冲突处理）
+  - Added "Read Guide (AI Must Follow)" section
+  - Defined status marker descriptions
+  - Clarified usage rules (priority, conflict handling)
 
 - `evolution-manual/knowledge-base/facts.md`
-  - 添加状态标记说明
-  - 现有条目添加 `[V]` 标记
+  - Added status marker descriptions
+  - Added `[V]` markers to existing entries
 
-**设计文档**：
-- `docs/FABLE_REVIEW.md` - AI reviewer 的深度评审
-- `docs/PROJECT_BACKGROUND.md` - 项目背景（用户原始需求）
+**Design Documents**:
+- `docs/FABLE_REVIEW.md` - AI reviewer's in-depth review
+- `docs/PROJECT_BACKGROUND.md` - Project background (original user requirements)
 
-**改进原因**：
-- AI review指出"写入审核机制缺失"是致命缺陷
-- 错误信息会形成自我强化循环
-- 需要简单的审核机制打破循环
+**Reason for Improvements**:
+- AI reviewer's review identified "missing write review mechanism" as a fatal flaw
+- Erroneous information can form a self-reinforcing loop
+- A simple review mechanism is needed to break the loop
 
-**影响范围**：
-- 所有知识库文件（facts.md、pitfalls.md 等）
-- AI 的读取和写入行为
-- 用户可能需要审核新条目
+**Scope of Impact**:
+- All knowledge base files (facts.md, pitfalls.md, etc.)
+- AI's read and write behavior
+- Users may need to review new entries
 
-**向后兼容**：
-- ✅ 完全兼容 V2.0
-- ✅ 旧条目无标记，默认为 `[D]`
-- ✅ 读取规则对无标记条目友好
+**Backward Compatibility**:
+- ✅ Fully compatible with V2.0
+- ✅ Old entries have no markers, default to `[D]`
+- ✅ Read rules are friendly to entries without markers
 
 ---
 
 ### [2.0.0] - 2026-07-28
 
-**重大变更**：
-- 从 Slash Command 迁移到 Skill 系统
-- 支持渐进式披露
-- 支持自动触发（AI 判断）
+**Breaking Changes**:
+- Migrated from Slash Command to Skill system
+- Supports progressive disclosure
+- Supports auto-trigger (AI judgment)
 
-**新增功能**：
-- 双向功能（读取 + 写入）
-- 渐进式读取规则
-- 与 Auto Memory 分离
+**New Features**:
+- Bidirectional capability (read + write)
+- Progressive read rules
+- Separated from Auto Memory
 
-**修改文件**：
-- `.claude/skills/evolution/SKILL.md` - 新建
-- `CLAUDE.md` - 已删除（Skill 独立工作）
+**Modified Files**:
+- `.claude/skills/evolution/SKILL.md` - Created
+- `CLAUDE.md` - Deleted (Skill works independently)
 
-**设计文档**：
-- `docs/V2_DESIGN.md` - V2 设计文档
-- `docs/EVOLUTION_RULES_AND_LOGIC_V2.md` - 系统规则
-- `docs/INSTALLATION_GUIDE_V2.md` - 安装指南
-- `docs/V2_TEST_GUIDE.md` - 测试指南
-- `docs/UPDATE_NOTES_V2.md` - 更新说明
-- `docs/PROJECT_BACKGROUND.md` - 项目背景
+**Design Documents**:
+- `docs/V2_DESIGN.md` - V2 design document
+- `docs/EVOLUTION_RULES_AND_LOGIC_V2.md` - System rules
+- `docs/INSTALLATION_GUIDE_V2.md` - Installation guide
+- `docs/V2_TEST_GUIDE.md` - Test guide
+- `docs/UPDATE_NOTES_V2.md` - Update notes
+- `docs/PROJECT_BACKGROUND.md` - Project background
 - `docs/FABLE_REVIEW.md` - AI review
 
-**改进原因**：
-- V1 使用 Slash Command，AI 不知道知识库存在
-- V2 使用 Skill，AI 知道且可自动触发
-- 节省 66% 上下文消耗
+**Reason for Improvements**:
+- V1 used Slash Command; AI was unaware of the knowledge base
+- V2 uses Skill; AI knows and can auto-trigger
+- Saves 66% context consumption
 
 ---
 
 ### [1.0.0] - 2026-07-21
 
-**初始版本**：
-- 使用 Slash Command 触发
-- 基础知识库结构
-- 单向功能（只读取）
+**Initial Release**:
+- Used Slash Command trigger
+- Basic knowledge base structure
+- Unidirectional capability (read-only)
 
-**文件**：
-- `.claude/commands/evolution.md` - 命令定义
-- `evolution-manual/knowledge-base/` - 知识库目录
+**Files**:
+- `.claude/commands/evolution.md` - Command definition
+- `evolution-manual/knowledge-base/` - Knowledge base directory
 
-**已知问题**：
-- AI 不知道知识库存在
-- 无法自动触发
-- 上下文消耗大（全量读取）
-
----
-
-## 变更统计
-
-| 版本 | 日期 | 类型 | 主要变更 |
-|------|------|------|---------|
-| 1.0.0 | 2026-07-21 | 初始 | Slash Command |
-| 2.0.0 | 2026-07-28 | MAJOR | 迁移到 Skill 系统 |
-| 2.1.0 | 2026-07-28 | MINOR | 写入审核机制 |
-| 3.0.0 | 2026-07-28 | MAJOR | 删除 auto 版本，简化系统 |
+**Known Issues**:
+- AI was unaware of the knowledge base
+- Could not auto-trigger
+- High context consumption (full read)
 
 ---
 
-## 未来规划
+## Change Statistics
 
-### [3.1.0] - 计划中
-- 被动审核机制（对话中自然验证）
-- 自动提升状态（draft → verified）
-
-### [3.2.0] - 计划中
-- 清理机制（stale 标记 + 自动归档）
-- 文件容量监控
-
-### [4.0.0] - 规划中
-- 完整的四级状态模型
-- 证据类型分类
-- 主动审核流程
+| Version | Date | Type | Major Changes |
+|---------|------|------|---------------|
+| 1.0.0 | 2026-07-21 | Initial | Slash Command |
+| 2.0.0 | 2026-07-28 | MAJOR | Migrated to Skill system |
+| 2.1.0 | 2026-07-28 | MINOR | Write review mechanism |
+| 3.0.0 | 2026-07-28 | MAJOR | Removed auto version, simplified system |
+| 3.1.0 | 2026-07-29 | MINOR | Added init command, conversation export mechanism |
 
 ---
 
-## 相关文档
+## Future Plans
 
-| 文档 | 说明 |
-|------|------|
-| `docs/FABLE_REVIEW.md` | AI reviewer 的深度评审 |
-| `docs/PROJECT_BACKGROUND.md` | 项目背景 |
-| `docs/V2_DESIGN.md` | V2 设计文档 |
-| `docs/EVOLUTION_RULES_AND_LOGIC_V2.md` | 系统规则 |
-| `docs/INSTALLATION_GUIDE_V2.md` | 安装指南 |
+### [3.2.0] - Planned
+- Cleanup mechanism (stale markers + auto-archiving)
+- File capacity monitoring
+
+### [4.0.0] - Under Consideration
+- Complete four-tier status model
+- Evidence type classification
+- Proactive review workflow
 
 ---
 
-**文档结束**
+## Related Documents
+
+| Document | Description |
+|----------|-------------|
+| `docs/FABLE_REVIEW.md` | AI reviewer's in-depth review |
+| `docs/PROJECT_BACKGROUND.md` | Project background |
+| `docs/V2_DESIGN.md` | V2 design document |
+| `docs/EVOLUTION_RULES_AND_LOGIC_V2.md` | System rules |
+| `docs/INSTALLATION_GUIDE_V2.md` | Installation guide |
+
+---
+
+**End of Document**
