@@ -1,311 +1,310 @@
-# Evolution 项目背景
+# Evolution Project Background
 
-> **版本**：3.0.0（2026-07-28）  
-> **作者**：lemen  
-> **状态**：已实现（V3.0.0）
+> **Version**: 3.3.0 (2026-07-31)  
+> **Author**: lemen  
+> **Status**: Implemented (V3.3.0)
 
-> **版本历史**：详见 [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)
-
----
-
-## 1. 项目起源
-
-### 1.1 两大痛点
-
-#### 痛点一：AI 的"失忆症"
-
-> AI 在执行长程任务中，经常会忘记重要的关键信息，反复犯同一种错误，甚至把错误信息当成正确信息传入上下文，从而形成死循环。
-
-**具体表现**：
-- 忘记环境配置（如 Python 版本、网络配置）
-- 重复犯同样的错误（如使用错误的命令）
-- 把之前的错误信息当成正确信息传播
-- 形成死循环，无法自拔
-
-**影响**：
-- 效率低下，用户需要反复提醒
-- 用户体验差，感觉 AI"不靠谱"
-- 浪费时间和资源
+> **Version History**: See [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)
 
 ---
 
-#### 痛点二：人类的"成长缺失"
+## 1. Project Origins
 
-> 人类从向 AI 下达任务到接收成果，这过程可能有 N 轮沟通，人类可能只是在反复验收和纠错，而并没有学习到新知识或得到有效的自我提升，这是非常遗憾的。
+### 1.1 Two Major Pain Points
 
-**具体表现**：
-- 用户只是"甲方"，提需求、验收、接收成果
-- 没有从协作过程中学习到新知识
-- 下次协作时还是同样的水平，没有提升
-- 反复沟通，浪费时间成本
+#### Pain Point 1: AI's "Amnesia"
 
-**影响**：
-- 用户能力没有成长
-- 协作效率无法提升
-- 用户始终是"外行"，难以准确表达需求
+> During long-running tasks, AI often forgets important key information, repeatedly makes the same mistakes, and even treats incorrect information as correct — feeding it back into context and creating a vicious cycle.
 
----
+**Specific Manifestations**:
+- Forgetting environment configurations (e.g., Python version, network settings)
+- Repeating the same mistakes (e.g., using incorrect commands)
+- Propagating previous errors as correct information
+- Getting trapped in a vicious cycle with no way out
 
-## 2. 核心洞察
-
-### 2.1 关于 LLM 的认知
-
-> LLM 是已经训练好的了，让它变得更聪明是很难的了，除非再训练，这个对于一般人类来讲不切实际；所以只能给 LLM 加外挂，这个外挂，我的理解就是 harness，可以是记忆库、MCP、skill、plugin、web search 这些工具的调用。
-
-**核心观点**：
-- 不指望 LLM 本身变得更聪明
-- 通过"外挂"增强 LLM 的能力
-- 外挂包括：记忆库、MCP、Skill、Plugin、Web Search 等
+**Impact**:
+- Low efficiency — users need to repeat reminders
+- Poor user experience — AI feels "unreliable"
+- Wasted time and resources
 
 ---
 
-### 2.2 关于任务完成的认知
+#### Pain Point 2: Humans' "Growth Gap"
 
-> 用 AI 执行任务，能够完成且达到预期是我的最基础和最直接的目标。AI 足够聪明，可能不稳定，也可能在错误的道路上探索钻研很久，甚至形成死循环，这就需求刚刚我说到的第 1 点了，给 AI 加外挂工具，让它更能理解我们的意图和更顺利地完成我们的任务。
+> Between the moment a human gives a task to an AI and the moment they receive the result, there may be N rounds of communication. The human may end up merely accepting deliverables and fixing errors, without learning anything new or achieving meaningful self-improvement — and that is a real missed opportunity.
 
-**核心观点**：
-- 基础目标：完成任务并达到预期
-- AI 的问题：不稳定、可能走弯路、可能死循环
-- 解决方案：加外挂工具，让 AI 更理解意图
+**Specific Manifestations**:
+- The user acts merely as a "client" — submitting requirements, reviewing, and receiving deliverables
+- No new knowledge gained from the collaboration process
+- Same skill level at the next collaboration — no growth
+- Repeated communication wastes time
 
----
-
-### 2.3 关于人类成长的认知
-
-> 人类在 AI 执行任务中不能只充当需求提出者、过程验收者、任务成果接收者，还要在这过程中学习到真正有用的知识，以致下次和 AI 协助时能更准确、更高效、更透彻、更有价值。
-
-**核心观点**：
-- 人类不应只是"甲方"
-- 应该在协作过程中学习
-- 下次协作时能更准确、高效、透彻、有价值
+**Impact**:
+- User capabilities do not grow
+- Collaboration efficiency cannot improve
+- Users remain "outsiders," struggling to express requirements accurately
 
 ---
 
-## 3. 具体需求
+## 2. Core Insights
 
-### 3.1 需求一：环境感知与条件告知
+### 2.1 Understanding LLMs
 
-> 让 AI 告知人类，完成该任务需要什么条件，当前条件有什么，还缺少什么，准备如何处理。
+> LLMs are already fully trained. Making them smarter is extremely difficult unless you retrain them, which is impractical for most people. So the only option is to give LLMs extensions — and by extensions, I mean the harness: tool invocations like knowledge bases, MCP, Skill, plugins, and web search.
 
-**示例**：
-- 完成任务 1 需要 WSL 环境，当前已有 Ubuntu，但网络还不能直通，准备配置成镜像模式共享直通宿主网络
-- 完成任务 2 需要本地 LLM，当前电脑有 Ollama，但还没 model，准备下载 qwen4-36b 模型
-
-**价值**：
-- 让用户了解任务的全貌
-- 知道当前状态和缺失条件
-- 理解 AI 的处理计划
+**Core Viewpoints**:
+- Don't expect the LLM itself to become smarter
+- Enhance LLM capabilities through "extensions"
+- Extensions include: knowledge bases, MCP, Skill, plugins, web search, etc.
 
 ---
 
-### 3.2 需求二：通俗易懂的技术讲解
+### 2.2 Understanding Task Completion
 
-> 我是技术小白，不懂代码，很专业术语也不懂，但我又想学，可全量精细化学习好像也不太可能，没时间。所以这时候就很考验 AI 了，给讲解哪些，如何讲解，这里面的取舍很复杂，我自己也没想好。
+> When using AI to execute tasks, completing the task and meeting expectations is my most basic and direct goal. AI is smart enough, but it can be unstable — it may wander down the wrong path for a long time, or even get stuck in an infinite loop. That's exactly why I mentioned point 1 earlier: give AI extension tools so it can better understand our intent and complete our tasks more smoothly.
 
-**具体挑战**：
-- 讲代码只讲框架？还是讲关键影响的几个？
-- 根据用户基本画像挑出对应内容讲解？
-- 专业复杂的技术如何深入浅出、生动形象、图文并茂、通俗易懂地讲解？
-
-**期望**：
-- AI 能根据用户水平调整讲解深度
-- 通俗易懂，避免过多专业术语
-- 生动形象，最好图文并茂
+**Core Viewpoints**:
+- Basic goal: Complete the task and meet expectations
+- AI's problems: Unstable, may take detours, may get stuck in loops
+- Solution: Add extension tools so AI better understands intent
 
 ---
 
-### 3.3 需求三：Prompt 改进指南
+### 2.3 Understanding Human Growth
 
-> 我提出的需求或问题，可能不够简洁、准确，这过程可能会反复和 AI 沟通，这里其实是不少时间成本的，所以我想在任务阶段性达成（即沟通到一定轮数后），AI 能给我一份更好地 prompt 指南，让我学会该任务或问题如何写 prompt 才是最高效最明了的。
+> Humans should not merely be the ones who submit requirements, review progress, and receive deliverables during an AI task. They should also learn genuinely useful knowledge throughout the process — so that next time they collaborate with AI, they can be more accurate, more efficient, more thorough, and more valuable.
 
-**价值**：
-- 减少反复沟通的时间成本
-- 让用户学会如何更好地表达需求
-- 提升下次协作的效率
-
----
-
-### 3.4 需求四：诚实的验收告知
-
-> 很多任务完成后，AI 无法做到像人类那样验收，比如很多时间 AI 是从 CLI 验收，并非 GUI 验收，底层验收看着可能是正确的，但人类表面看着其实是有问题的。这时候，AI 应该诚实地告知人类，让人类进行再次验收。
-
-**具体场景**：
-- AI 从 CLI 验收，但人类需要从 GUI 验收
-- 底层验证正确，但表面看起来有问题
-- AI 无法控制电脑桌面进行视觉验收（成本大）
-
-**期望**：
-- AI 诚实告知验收的局限性
-- 让人类决定是否需要再次验收
-- 不隐瞒问题，不夸大成果
+**Core Viewpoints**:
+- Humans should not just be "clients"
+- They should learn during the collaboration process
+- Next collaboration should be more accurate, efficient, thorough, and valuable
 
 ---
 
-## 4. 系统特性
+## 3. Specific Requirements
 
-### 4.1 运行方式
+### 3.1 Requirement 1: Environment Awareness and Condition Reporting
 
-> 这个功能（系统），基本是静默运行（当然也可以手动触发），由 sub agents 在后台静悄悄地运行，不进入主 session 任务，不能污染主对话，人类基本无感。
+> Let the AI tell the human what conditions are needed to complete the task, what conditions currently exist, what is still missing, and how it plans to handle the gaps.
 
-**核心特性**：
-- **静默运行**：不干扰主对话
-- **后台执行**：sub agents 在后台工作
-- **不污染主对话**：保持主 session 干净
-- **人类基本无感**：不需要用户主动干预
-- **支持手动触发**：用户也可以主动触发
+**Examples**:
+- Task 1 requires a WSL environment; Ubuntu is already available, but the network cannot reach it directly yet — the plan is to configure mirror mode to share the host's network
+- Task 2 requires a local LLM; Ollama is installed, but no model is downloaded yet — the plan is to download the qwen4-36b model
 
----
-
-### 4.2 设计原则
-
-基于以上需求，提炼出以下设计原则：
-
-| 原则 | 说明 |
-|------|------|
-| **任务优先** | 首要目标是完成任务，不是运行系统 |
-| **自然发生** | 学习和沉淀在任务执行中自然发生 |
-| **人类无感** | 后台运行，不干扰主对话 |
-| **渐进成长** | AI 和人类都在协作中成长 |
-| **诚实透明** | AI 诚实地告知局限性和问题 |
+**Value**:
+- Lets the user understand the full picture of the task
+- Shows current state and missing conditions
+- Explains the AI's execution plan
 
 ---
 
-## 5. 实现方案
+### 3.2 Requirement 2: Plain-Language Technical Explanations
 
-### 5.1 技术选型
+> I'm a tech novice — I don't understand code or many technical terms, but I want to learn. However, exhaustive fine-grained learning is not realistic given time constraints. This is where the real test for AI begins: what to explain and how to explain it. The trade-offs involved are complex, and I haven't fully figured it out myself.
 
-基于"外挂"的理念，选择 Claude Code 的 **Skill 系统**作为实现方案：
+**Specific Challenges**:
+- When explaining code, should it cover the overall framework? Or just the key parts that matter?
+- Should it tailor content to the user's basic profile?
+- How to explain complex technical topics in a way that is accessible, vivid, illustrated, and easy to understand?
 
-| 特性 | 说明 |
-|------|------|
-| **渐进式披露** | 启动时只加载描述，按需加载完整内容 |
-| **自动触发** | AI 可以根据上下文自主判断是否触发 |
-| **手动触发** | 用户也可以通过 `/evolution` 手动触发 |
-| **项目级存储** | 知识库存储在 `evolution-manual/knowledge-base/` |
-| **与 Auto Memory 分离** | 不污染 Claude Code 的 Auto Memory 系统 |
+**Expectations**:
+- AI adjusts explanation depth based on user level
+- Plain language, avoiding excessive jargon
+- Vivid and engaging, ideally with illustrations
 
 ---
 
-### 5.2 系统架构
+### 3.3 Requirement 3: Prompt Improvement Guide
+
+> The requirements or problems I raise may not be concise or accurate enough, leading to repeated rounds of communication with AI — which costs a lot of time. So I'd like that when a task reaches a milestone (i.e., after a certain number of communication rounds), AI could give me a better prompt guide, teaching me how to write prompts for that task or problem in the most efficient and clearest way.
+
+**Value**:
+- Reduces time cost from repeated communication
+- Helps users learn to express requirements more effectively
+- Improves efficiency of the next collaboration
+
+---
+
+### 3.4 Requirement 4: Honest Acceptance Reporting
+
+> After many tasks are completed, AI cannot verify results the way humans do. For example, AI often verifies via CLI rather than GUI. The underlying verification may look correct, but the surface-level result may actually have problems. In such cases, AI should honestly inform the human and ask them to perform a secondary verification.
+
+**Specific Scenarios**:
+- AI verifies via CLI, but the human needs to verify via GUI
+- Underlying verification passes, but the surface appearance has issues
+- AI cannot control the desktop for visual verification (too costly)
+
+**Expectations**:
+- AI honestly reports verification limitations
+- Lets humans decide whether re-verification is needed
+- Does not hide problems or exaggerate results
+
+---
+
+## 4. System Features
+
+### 4.1 Mode of Operation
+
+> This system runs mostly in silent mode (though it can also be manually triggered), with sub agents running quietly in the background. It does not enter the main session task stream and does not pollute the main conversation. Humans are largely unaware of it.
+
+**Core Features**:
+- **Silent operation**: Does not interfere with the main conversation
+- **Background execution**: Sub agents work in the background
+- **No main conversation pollution**: Keeps the main session clean
+- **Largely transparent to humans**: No active user intervention needed
+- **Supports manual trigger**: Users can also trigger it proactively
+
+---
+
+### 4.2 Design Principles
+
+Based on the requirements above, the following design principles are distilled:
+
+| Principle | Description |
+|-----------|-------------|
+| **Task First** | The primary goal is to complete the task, not to run the system |
+| **Natural Occurrence** | Learning and knowledge accumulation happen naturally during task execution |
+| **Transparent to Humans** | Runs in the background without disrupting the main conversation |
+| **Progressive Growth** | Both AI and humans grow through collaboration |
+| **Honest and Transparent** | AI honestly reports limitations and issues |
+
+---
+
+## 5. Implementation
+
+### 5.1 Technology Choice
+
+Based on the "extension" philosophy, the **Skill system** of Claude Code was chosen as the implementation:
+
+| Feature | Description |
+|---------|-------------|
+| **Progressive Disclosure** | Only the description is loaded at startup; full content loaded on demand |
+| **Manual Trigger** | Users trigger manually via `/evolution` |
+| **Project-Level Storage** | Knowledge base stored in `evolution/knowledge-base/` |
+| **Separated from Auto Memory** | Does not pollute Claude Code's Auto Memory system |
+
+---
+
+### 5.2 System Architecture
 
 ```
 <project>/
 ├── .claude/
 │   └── skills/
 │       └── evolution/
-│           ── SKILL.md              # Skill 定义
+│           └── SKILL.md              # Skill definition
 │
-├── evolution-manual/                  # 知识库
-│   └── knowledge-base/
-│       ├── kb-index.md               # 索引
-│       ├── facts.md                  # 关键事实
-│       ├── pitfalls.md               # 踩坑记录
-│       ├── state.md                  # 当前状态
-│       ├── growth-notes.md           # 学习笔记
-│       ├── prompt-improvements.md    # Prompt 改进
-│       ├── alignment.md              # 对齐清单
-│       └── decisions.md              # 决策记录
+── evolution/                       # Knowledge base
+    └── knowledge-base/
+        ├── kb-index.md               # Index
+        ├── facts.md                  # Key facts
+        ├── pitfalls.md               # Pitfalls
+        ├── state.md                  # Current state
+        ├── growth-notes.md           # Learning notes
+        ├── prompt-improvements.md    # Prompt improvements
+        ├── alignment.md              # Alignment checklist
+        └── decisions.md              # Decision log
 ```
 
 ---
 
-### 5.3 双向功能
+### 5.3 Bidirectional Capability
 
-**Evolution 是一个双向同步系统**：
+**Evolution is a bidirectional sync system**:
 
-| 功能 | 说明 |
-|------|------|
-| **📖 读取** | 让 AI 知道"已经知道什么" |
-| **✍️ 写入** | 让 AI 记录"新学到什么" |
+| Function | Description |
+|----------|-------------|
+| **📖 Read** | Lets AI know "what is already known" |
+| **✍️ Write** | Lets AI record "what was newly learned" |
 
-**同步流程**：
+**Sync Flow**:
 ```
-用户输入 /evolution
+User inputs /evolution
     ↓
-📖 读取阶段 → 了解已有知识
+📖 Read Phase → Understand existing knowledge
     ↓
-✍️ 写入阶段 → 记录新知识
+✍️ Write Phase → Record new knowledge
     ↓
-报告摘要
+Summary report
 ```
 
 ---
 
-## 6. 预期收益
+## 6. Expected Benefits
 
-### 6.1 对 AI 的收益
+### 6.1 Benefits for AI
 
-| 收益 | 说明 |
-|------|------|
-| **更可靠** | 记住关键信息，避免重复错误 |
-| **更稳定** | 不会在错误道路上走太远 |
-| **更高效** | 基于历史经验快速决策 |
-| **更诚实** | 如实告知局限性和问题 |
+| Benefit | Description |
+|---------|-------------|
+| **More Reliable** | Remembers key information, avoids repeated mistakes |
+| **More Stable** | Won't go too far down the wrong path |
+| **More Efficient** | Makes quick decisions based on historical experience |
+| **More Honest** | Truthfully reports limitations and issues |
 
-### 6.2 对人类的收益
+### 6.2 Benefits for Humans
 
-| 收益 | 说明 |
-|------|------|
-| **学习知识** | 从协作过程中学习技术知识 |
-| **提升效率** | 学会更好地写 prompt |
-| **理解全貌** | 了解任务的条件和状态 |
-| **参与验收** | 诚实的验收告知，让人类参与 |
-
----
-
-## 7. 成功指标
-
-### 7.1 AI 侧指标
-
-| 指标 | 目标 |
-|------|------|
-| **重复错误率** | 降低 80% |
-| **任务完成率** | 提升 50% |
-| **上下文消耗** | 节省 66%（渐进式披露） |
-
-### 7.2 人类侧指标
-
-| 指标 | 目标 |
-|------|------|
-| **学习效率** | 每次协作学到 1-2 个知识点 |
-| **Prompt 质量** | 反复沟通次数减少 50% |
-| **用户满意度** | 提升 30% |
+| Benefit | Description |
+|---------|-------------|
+| **Knowledge Learning** | Learn technical knowledge from the collaboration process |
+| **Improved Efficiency** | Learn to write better prompts |
+| **Full Picture** | Understand task conditions and status |
+| **Verification Participation** | Honest acceptance reporting lets humans participate |
 
 ---
 
-## 8. 版本历史
+## 7. Success Metrics
 
-| 版本 | 日期 | 变更 |
-|------|------|------|
-| v1.0 | 2026-07-21 | 初始版本（Slash Command） |
-| v2.0 | 2026-07-28 | 重构为 Skill 系统（渐进式披露） |
+### 7.1 AI-Side Metrics
+
+| Metric | Target |
+|--------|--------|
+| **Repeated Error Rate** | Reduced by 80% |
+| **Task Completion Rate** | Improved by 50% |
+| **Context Consumption** | Saved 66% (via progressive disclosure) |
+
+### 7.2 Human-Side Metrics
+
+| Metric | Target |
+|--------|--------|
+| **Learning Efficiency** | Learn 1-2 knowledge points per collaboration |
+| **Prompt Quality** | Repeated communication rounds reduced by 50% |
+| **User Satisfaction** | Improved by 30% |
 
 ---
 
-## 9. 参考资料
+## 8. Version History
 
-### 9.1 项目文档
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | 2026-07-21 | Initial release (Slash Command) |
+| v2.0 | 2026-07-28 | Refactored to Skill system (progressive disclosure) |
 
-- [V2 设计文档](./V2_DESIGN.md)
-- [系统规则与运行逻辑](./EVOLUTION_RULES_AND_LOGIC_V2.md)
-- [安装指南](./INSTALLATION_GUIDE_V2.md)
-- [测试指南](./V2_TEST_GUIDE.md)
+---
 
-### 9.2 官方文档
+## 9. References
+
+### 9.1 Project Documentation
+
+- [Design Document](./DESIGN_V3.1.0.md)
+- [Installation Guide](./INSTALLATION_GUIDE.md)
+- [Version History](./VERSION_HISTORY.md)
+- [Document Index](./README.md)
+
+### 9.2 Official Documentation
 
 - [Extend Claude with skills](https://code.claude.com/docs/en/skills)
 - [How Claude remembers your project](https://code.claude.com/docs/en/memory)
 
 ---
 
-## 10. 结语
+## 10. Conclusion
 
-> **Evolution 不是一个工具，而是一种协作方式。**
+> **Evolution is not a tool — it is a way of collaborating.**
 > 
-> 它让 AI 在协作中变得更可靠，让人类在协作中变得更强大。
+> It makes AI more reliable through collaboration, and makes humans more capable through collaboration.
 > 
-> 最终实现：AI 和人类在协作中共同成长。
+> The ultimate goal: AI and humans growing together through collaboration.
 
 ---
 
-**文档结束**
+**End of Document**
