@@ -1,231 +1,37 @@
 ---
 name: evolution
-version: 3.1.0
-description: 人机共生进化系统，管理项目知识库。当需要参考项目历史知识、避免重复错误、或执行知识同步时触发。
-when_to_use: |
-  - 用户询问环境配置、技术决策等历史知识
-  - 检测到重复错误或相似问题
-  - 用户手动输入 /evolution
-  - 首次安装时用户输入 /evolution init
+version: 3.8.0
+description: 人机共生进化系统，管理项目知识库。当用户询问历史知识（环境配置、技术决策）、检测到重复错误、需执行知识同步、或用户输入 /evolution（含 init）时触发。所有操作由 sub agent 后台执行，减少主会话污染。
 disable-model-invocation: false
 ---
 
-# Evolution System v3.1.0
+## 命令
 
-人机共生进化系统，让 AI 和人类在协作中共同成长。
-
-**当前版本**：3.1.0（2026-07-29）
-
----
-
-## 知识库位置
-
-`evolution/knowledge-base/`
-
----
-
-## 核心设计原则
-
-> **Evolution 运行时派 sub agents 处理，尽量减少对主会话的污染**
-
-所有操作（初始化、同步、历史分析）都由 **sub agent** 在后台执行。
-
----
-
-## 执行命令
-
-### 初始化命令（首次安装）
-
-```bash
-/evolution init
-```
-
-**执行方式**：
-1. 主 agent 触发 **sub agent**
-2. Sub agent 在后台分析**全部**历史对话
-3. 提取所有关键事实
-4. 记录所有踩坑记录
-5. 生成初始知识库
-6. 标记所有条目为 `[D]` (draft)
-7. 返回摘要给主 agent
-
-**使用场景**：
-- 首次安装 Evolution 后
-- 知识库被清空后
-- 需要重新建立知识库时
-
-### 同步命令（日常使用）
-
-- `/evolution` - 执行完整同步（sub agent 后台执行）
-- `/kb-sync` - 只同步知识库
-- `/growth-sync` - 只生成学习笔记
-- `/alignment-sync` - 只检查对齐项
-
----
-
-## 对话导出机制
-
-### 方法 A：AI 记忆（默认）
-
-**执行流程**：
-```
-用户输入 /evolution
-    ↓
-主 agent 触发 sub agent
-    ↓
-Sub agent 分析当前 session 的对话上下文
-    ↓
-提取知识，写入知识库
-    ↓
-返回摘要
-```
-
-**优点**：
-- ✅ 简单，无需额外文件
-- ✅ 实时性高
-- ✅ 主 session 几乎不被污染
-
-**缺点**：
-- ❌ 只能分析当前 session 的对话
-
----
-
-### 方法 B：文件记录（可选）
-
-**执行流程**：
-```
-用户输入 /evolution --history
-    ↓
-主 agent 触发 sub agent
-    ↓
-Sub agent 读取临时文件：
-  .claude/.tmp/conversation-*.md
-    ↓
-分析全部对话历史
-    ↓
-提取知识，写入知识库
-    ↓
-返回摘要
-```
-
-**优点**：
-- ✅ 持久化，可追溯历史
-- ✅ 支持跨 session 分析
-
-**缺点**：
-- ❌ 需要额外文件
-
----
-
-## Sub Agent 执行规则
-
-**所有命令都由 sub agent 执行**：
-
-1. **主 agent 职责**：
-   - 接收用户命令
-   - 触发 sub agent
-   - 显示 sub agent 返回的摘要
-   - **不直接操作知识库**
-
-2. **Sub agent 职责**：
-   - 读取对话历史
-   - 提取知识
-   - 写入知识库
-   - 返回摘要
-
-3. **好处**：
-   - ✅ 主 session 几乎不被污染
-   - ✅ 主 session 保持流畅
-   - ✅ 知识库操作在后台完成
-
----
-
-## 写入规则（审核机制）
-
-**新条目必须标记状态**：
-
-| 状态 | 标记 | 含义 |
+| 命令 | 用途 | 说明 |
 |------|------|------|
-| draft | `[D]` | AI 提取，未经用户验证 |
-| verified | `[V]` | 用户明确确认或工具验证 |
-| deprecated | `[X]` | 已废弃或已证实错误 |
+| `/evolution-init` | 初始化知识库 | [init.md](commands/init.md) |
+| `/evolution` | 增量同步 | [sync.md](commands/sync.md) |
+| `/kb-sync` | 只同步知识库 | [sync.md](commands/sync.md) |
+| `/growth-sync` | 只生成学习笔记 | [sync.md](commands/sync.md) |
+| `/alignment-sync` | 只检查对齐项 | [sync.md](commands/sync.md) |
 
-**写入规则**：
+## 规则
 
-1. **所有新条目默认标记为 `[D]`**
-   - 格式：`### [D] 条目标题`
-   - 示例：`### [D] WSL 网络配置`
+| 规则 | 说明 |
+|------|------|
+| 写入 | [write.md](rules/write.md) |
+| 读取 | [read.md](rules/read.md) |
+| 去重 | [dedup.md](rules/dedup.md) |
 
-2. **以下情况可标记为 `[V]`**：
-   - 用户在对话中明确确认（如说"对"、"是的"）
-   - 工具调用结果验证（如 `node -v` 输出）
-   - 外部文档引用
+## 知识库
 
-3. **冲突处理**：
-   - 新条目与已有条目冲突 → 旧条目标记为 `[X]`（deprecated）
-   - 新条目以 `[D]` 写入
+`evolution/knowledge-base/`，入口 `kb-index.md`（<200 行）。
 
-4. **读取时区分状态**：
-   - `[V]` 条目：正常使用
-   - `[D]` 条目：可使用，但标注"未验证"
-   - `[X]` 条目：不读取
-
----
-
-## 渐进式读取规则
-
-**重要**：不要一次性读取所有文件！遵循渐进式披露原则。
-
-### 步骤 1：读取索引
-
-读取 `evolution/knowledge-base/kb-index.md`
-
-### 步骤 2：判断需求
-
-基于索引中的分类摘要，判断当前任务需要哪些信息：
-
-- 如果用户问环境配置 → 读取 `facts.md`
-- 如果用户问历史错误 → 读取 `pitfalls.md`
-- 如果需要更新状态 → 读取 `state.md`
-- 如果用户问学习知识 → 读取 `growth-notes.md`
-- 如果需要验收检查 → 读取 `alignment.md`
-- 如果需要决策记录 → 读取 `decisions.md`
-
-### 步骤 3：按需读取
-
-**只读取相关的 1-2 个文件**，不要全量加载所有文件
-
----
-
-## 去重策略
-
-1. 基于 `kb-index.md` 的摘要判断是否可能重复
-2. 如果不确定，读取对应详情文件精确去重
-3. 相同信息更新时间戳，新信息追加
-
----
-
-## 知识库文件说明
-
-| 文件 | 用途 | 读取 | 写入 |
-|------|------|------|------|
-| `kb-index.md` | 索引文件（<200 行） | ✅ | ✅ |
-| `facts.md` | 关键事实 | ✅ | ✅ |
-| `pitfalls.md` | 踩坑记录 | ✅ | ✅ |
-| `state.md` | 当前状态 | ✅ | ✅ |
-| `growth-notes.md` | 学习笔记 | ✅ | ✅ |
-| `prompt-improvements.md` | Prompt 改进 | ✅ | ✅ |
-| `alignment.md` | 对齐清单 | ✅ | ✅ |
-| `decisions.md` | 决策记录 | ✅ | ✅ |
-
----
+配置见 [config.yaml](config.yaml) · 导出机制见 [sync.md](commands/sync.md)
 
 ## 核心原则
 
 1. **与 Auto Memory 分离** - 不污染 Claude Code 的 Auto Memory 系统
-2. **项目级存储** - 知识库存储在 `evolution/knowledge-base/`
+2. **项目级存储** - 存储在 `evolution/knowledge-base/`
 3. **按需加载** - 通过索引引导 AI 按需读取，避免上下文污染
-4. **渐进成长** - AI 和人类都在协作中成长
-5. **双向同步** - 既读取已有知识，也写入新知识
-6. **人工审核** - 所有内容必须人工核对，人类也要读取文档学习
-7. **Sub Agent 执行** - 所有操作由 sub agent 执行，减少主 session 污染
+4. **人工审核** - 所有内容必须人工核对，人类也要读取文档学习

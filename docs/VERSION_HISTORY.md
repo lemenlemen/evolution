@@ -1,18 +1,25 @@
 # Evolution Version History
 
-> **Current Version**: 3.3.0
-> **Release Date**: 2026-07-31
+🌐 **Language / 语言**: [English](VERSION_HISTORY.md) | [中文](VERSION_HISTORY.zh-CN.md)
+
+> **Current version**: 3.8.0
+> **Release date**: 2026-08-01
 
 ---
 
-## Version Changes Overview
+## Version Change Overview
 
-| Version | Date | Major Changes |
+| Version | Date | Major changes |
 |---------|------|---------------|
-| v3.3.0 | 2026-07-31 | Fixed JSON serialization crash, incremental unit drift, Windows encoding, token estimation bias (CJK coefficient 1.5→1.0), cleanup safety, file handle leaks, and other issues |
+| v3.8.0 | 2026-08-01 | Fixed three bugs: enforced script + disabled manual glob, fixed find_jsonl_file to return all files, added validation mechanism |
+| v3.7.0 | 2026-08-01 | Fixed `/evolution-init` command, call `evolution-export.py` to export full history, prevent sampling |
+| v3.6.0 | 2026-08-01 | Split `/evolution init` into standalone command `/evolution-init`, distinguish initialization from incremental sync |
+| v3.5.0 | 2026-07-31 | Refactored based on writing-great-skills rules, SKILL.md reduced from 96 lines to 37 lines |
+| v3.4.0 | 2026-07-31 | Modular refactoring, SKILL.md split, config.yaml unified configuration |
+| v3.3.0 | 2026-07-30 | Fixed JSON serialization crash, incremental unit drift, Windows encoding, token estimation bias (CJK coefficient 1.5→1.0), cleanup safety, file handle leaks, and other issues |
 | v3.2.1 | 2026-07-30 | Updated pagination parameter: 80K → 150K (based on attention research) |
 | v3.2.0-draft | 2026-07-29 | Initial design, based on 200K window assumption |
-| v3.1.0 | 2026-07-29 | Added init command, conversation export mechanism, sub agent execution design |
+| v3.1.0 | 2026-07-29 | Added initialization command, conversation export mechanism, sub agent execution design |
 | v3.0.0 | 2026-07-28 | Simplified system, removed auto version, added write review mechanism |
 | v2.1.0 | 2026-07-28 | Write review mechanism (status markers) |
 | v2.0.0 | 2026-07-28 | Skill system migration |
@@ -24,18 +31,18 @@
 
 ### New Features
 
-1. **Init Command**
+1. **Initialization command**
    - Added `/evolution init` command
    - Analyzes all historical conversations after first installation
    - Generates initial knowledge base
 
-2. **Conversation Export Mechanism**
+2. **Conversation export mechanism**
    - Method A: AI memory (default)
    - Method B: File recording (optional)
 
-3. **Sub Agent Execution Design**
-   - All operations executed by sub agents
-   - Reduces pollution to the main session
+3. **Sub Agent execution design**
+   - All operations executed by sub agent
+   - Reduces pollution to main session
 
 ### Design Document Changes
 
@@ -45,49 +52,49 @@
 
 2. **SKILL.md**
    - Updated to v3.1.0
-   - Added init command
+   - Added initialization command
    - Added conversation export mechanism
-   - Emphasized sub agent execution principle
+   - Emphasized sub agent execution principles
 
 3. **DESIGN_V3.1.0.md**
    - Created new design document
    - Detailed design considerations
-   - Described document responsibility division
+   - Documented document responsibility division
 
 ---
 
 ## v3.0.0 (2026-07-28)
 
-**Breaking Changes**:
+**Major changes**:
 - Removed `evolution-auto/` directory (auto-trigger version)
-- Renamed knowledge base directory from `evolution-manual/` to `evolution/`
-- Simplified system, keeping only the manual trigger version
+- Knowledge base directory changed from `evolution-manual/` to `evolution/`
+- Simplified system, kept only manual trigger version
 
-**Reason for Changes**:
-- All content must be manually verified
+**Reason for changes**:
+- All content must be manually reviewed
 - Humans also need to read documents for learning
 - Auto-trigger version was not battle-tested
-- Simplify the system and reduce complexity
+- Simplify system, reduce complexity
 
-**Modified Files**:
+**Modified files**:
 - Deleted `evolution-auto/` directory
 - Renamed `evolution-manual/` → `evolution/`
 - `.claude/skills/evolution/SKILL.md`
   - Version number: 2.1.0 → 3.0.0
   - Removed "auto trigger" section
-  - Removed "manual trigger" heading (only one version now)
+  - Removed "manual trigger" heading (only one version left)
   - Updated knowledge base location: `evolution-manual/` → `evolution/`
   - Added core principle: manual review
 - `evolution/knowledge-base/kb-index.md`
   - Version number: 2.1.0 → 3.0.0
-  - Removed "manual trigger" markers
+  - Removed "manual trigger" label
   - Updated location information
 
-**Backward Compatibility**:
+**Backward compatibility**:
 - ❌ Not compatible (directory structure changes)
-- ️ Existing knowledge base needs migration
+- ️ Requires migrating existing knowledge base
 
-**Migration Guide**:
+**Migration guide**:
 ```bash
 # 1. Rename directory
 mv evolution-manual evolution
@@ -102,20 +109,20 @@ mv evolution-manual evolution
 
 ### [2.1.0] - 2026-07-28
 
-**New Features**:
+**New features**:
 - Added write review mechanism (status markers)
-- New entries default to `[D]` (draft)
-- User-confirmed entries marked as `[V]` (verified)
-- Deprecated entries marked as `[X]` (deprecated)
+- New entries are marked as `[D]` (draft) by default
+- User-confirmed entries are marked as `[V]` (verified)
+- Deprecated entries are marked as `[X]` (deprecated)
 
-**Modified Files**:
+**Modified files**:
 - `.claude/skills/evolution/SKILL.md`
-  - Added "Write Rules (Review Mechanism)" section
+  - Added "Write rules (review mechanism)" section
   - Defined three-tier status model (draft/verified/deprecated)
   - Clarified write rules and conflict handling
-  
+
 - `evolution-manual/knowledge-base/kb-index.md`
-  - Added "Read Guide (AI Must Follow)" section
+  - Added "Reading guide (AI must follow)" section
   - Defined status marker descriptions
   - Clarified usage rules (priority, conflict handling)
 
@@ -123,44 +130,44 @@ mv evolution-manual evolution
   - Added status marker descriptions
   - Added `[V]` markers to existing entries
 
-**Design Documents**:
+**Design documents**:
 - `docs/FABLE_REVIEW.md` - AI reviewer's in-depth review
 - `docs/PROJECT_BACKGROUND.md` - Project background (original user requirements)
 
-**Reason for Improvements**:
-- AI reviewer's review identified "missing write review mechanism" as a fatal flaw
+**Reason for improvement**:
+- AI review identified "missing write review mechanism" as a fatal flaw
 - Erroneous information can form a self-reinforcing loop
 - A simple review mechanism is needed to break the loop
 
-**Scope of Impact**:
+**Impact scope**:
 - All knowledge base files (facts.md, pitfalls.md, etc.)
-- AI's read and write behavior
+- AI's reading and writing behavior
 - Users may need to review new entries
 
-**Backward Compatibility**:
+**Backward compatibility**:
 - ✅ Fully compatible with V2.0
 - ✅ Old entries have no markers, default to `[D]`
-- ✅ Read rules are friendly to entries without markers
+- ✅ Reading rules are friendly to unmarked entries
 
 ---
 
 ### [2.0.0] - 2026-07-28
 
-**Breaking Changes**:
+**Major changes**:
 - Migrated from Slash Command to Skill system
 - Supports progressive disclosure
-- Supports auto-trigger (AI judgment)
+- Supports auto trigger (AI judgment)
 
-**New Features**:
+**New features**:
 - Bidirectional capability (read + write)
-- Progressive read rules
+- Progressive reading rules
 - Separated from Auto Memory
 
-**Modified Files**:
-- `.claude/skills/evolution/SKILL.md` - Created
+**Modified files**:
+- `.claude/skills/evolution/SKILL.md` - Created new
 - `CLAUDE.md` - Deleted (Skill works independently)
 
-**Design Documents**:
+**Design documents**:
 - `docs/V2_DESIGN.md` - V2 design document
 - `docs/EVOLUTION_RULES_AND_LOGIC_V2.md` - System rules
 - `docs/INSTALLATION_GUIDE_V2.md` - Installation guide
@@ -169,53 +176,57 @@ mv evolution-manual evolution
 - `docs/PROJECT_BACKGROUND.md` - Project background
 - `docs/FABLE_REVIEW.md` - AI review
 
-**Reason for Improvements**:
-- V1 used Slash Command; AI was unaware of the knowledge base
-- V2 uses Skill; AI knows and can auto-trigger
+**Reason for improvement**:
+- V1 used Slash Command, AI was unaware of the knowledge base
+- V2 uses Skill, AI knows and can auto trigger
 - Saves 66% context consumption
 
 ---
 
 ### [1.0.0] - 2026-07-21
 
-**Initial Release**:
+**Initial release**:
 - Used Slash Command trigger
 - Basic knowledge base structure
-- Unidirectional capability (read-only)
+- Unidirectional capability (read only)
 
 **Files**:
 - `.claude/commands/evolution.md` - Command definition
 - `evolution-manual/knowledge-base/` - Knowledge base directory
 
-**Known Issues**:
-- AI was unaware of the knowledge base
-- Could not auto-trigger
+**Known issues**:
+- AI is unaware of the knowledge base
+- Cannot auto trigger
 - High context consumption (full read)
 
 ---
 
 ## Change Statistics
 
-| Version | Date | Type | Major Changes |
+| Version | Date | Type | Major changes |
 |---------|------|------|---------------|
 | 1.0.0 | 2026-07-21 | Initial | Slash Command |
 | 2.0.0 | 2026-07-28 | MAJOR | Migrated to Skill system |
 | 2.1.0 | 2026-07-28 | MINOR | Write review mechanism |
 | 3.0.0 | 2026-07-28 | MAJOR | Removed auto version, simplified system |
-| 3.1.0 | 2026-07-29 | MINOR | Added init command, conversation export mechanism |
+| 3.1.0 | 2026-07-29 | MINOR | Added initialization command, conversation export mechanism |
+| 3.2.0 | 2026-07-29 | MINOR | Pagination design based on 200K window |
+| 3.2.1 | 2026-07-30 | PATCH | Updated pagination parameter: 80K → 150K |
+| 3.3.0 | 2026-07-30 | PATCH | Fixed JSON serialization, Windows encoding, token estimation, file handle leaks |
+| 3.4.0 | 2026-07-31 | MINOR | Modular refactoring, SKILL.md split, config.yaml |
+| 3.5.0 | 2026-07-31 | MINOR | Refactored based on writing-great-skills rules |
+| 3.6.0 | 2026-08-01 | MINOR | Split `/evolution init` into `/evolution-init` |
+| 3.7.0 | 2026-08-01 | PATCH | Fixed `/evolution-init`, prevent sampling |
+| 3.8.0 | 2026-08-01 | PATCH | Fixed three bugs: enforced script, find_jsonl_file, validation |
 
 ---
 
 ## Future Plans
 
-### [3.2.0] - Planned
-- Cleanup mechanism (stale markers + auto-archiving)
-- File capacity monitoring
-
-### [4.0.0] - Under Consideration
+### [4.0.0] - In planning
 - Complete four-tier status model
 - Evidence type classification
-- Proactive review workflow
+- Proactive review process
 
 ---
 
@@ -223,12 +234,11 @@ mv evolution-manual evolution
 
 | Document | Description |
 |----------|-------------|
-| `docs/FABLE_REVIEW.md` | AI reviewer's in-depth review |
+| `docs/archive/FABLE_REVIEW.md` | AI reviewer's in-depth review |
 | `docs/PROJECT_BACKGROUND.md` | Project background |
-| `docs/V2_DESIGN.md` | V2 design document |
-| `docs/EVOLUTION_RULES_AND_LOGIC_V2.md` | System rules |
-| `docs/INSTALLATION_GUIDE_V2.md` | Installation guide |
+| `docs/archive/V2_DESIGN.md` | V2 design document |
+| `docs/archive/EVOLUTION_RULES_AND_LOGIC_V2.md` | V2 system rules |
 
 ---
 
-**End of Document**
+**End of document**

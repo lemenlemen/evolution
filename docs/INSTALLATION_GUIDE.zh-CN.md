@@ -1,8 +1,6 @@
 # Evolution 安装指南
 
-> 🌐 **语言 / Language**: [中文](INSTALLATION_GUIDE.zh-CN.md) | [English](INSTALLATION_GUIDE.md)
-
-> **版本**：3.3.0（2026-07-31）  
+> **版本**：3.8.0（2026-08-01）  
 > **适用平台**：Windows / macOS / Linux
 
 > **版本历史**：详见 [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)
@@ -173,11 +171,11 @@ head -10 .claude/skills/evolution/SKILL.md
 
 **可能原因**：
 - `disable-model-invocation: true`（应该为 `false`）
-- `when_to_use` 描述不清晰
+- `description` 触发关键词不清晰
 
 **解决**：
 - 检查 frontmatter 中 `disable-model-invocation: false`
-- 优化 `when_to_use` 描述
+- 优化 `description` 字段的触发关键词
 
 ---
 
@@ -286,4 +284,4 @@ git commit -m "feat: add evolution skill"
 
 ---
 
-**安装完成！开始使用 Evolution v3.1.0。**
+**安装完成！开始使用 Evolution v3.8.0。**

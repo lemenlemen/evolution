@@ -1,8 +1,6 @@
 # 导出和分析对话内容 - 设计方案
 
-> 🌐 **语言 / Language**: [中文](EXPORT_AND_ANALYSIS_DESIGN.zh-CN.md) | [English](EXPORT_AND_ANALYSIS_DESIGN.md)
-
-> **版本**：3.3.0
+> **版本**：3.8.0
 > **日期**：2026-07-31
 > **作者**：lemen
 > **状态**：设计完成，已修复并验证

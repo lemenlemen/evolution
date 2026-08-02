@@ -2,14 +2,14 @@
 
 > **Human-AI Symbiosis Evolution System** — Growing together through collaboration
 
-**Version**: v3.3.0 (2026-07-31)
+**Version**: v3.8.0 (2026-08-01)
 
 🌐 **Language / 语言**: [English](README.md) | [中文](README.zh-CN.md)
 
 ![Evolution Banner](https://img.shields.io/badge/Evolution-Human--AI_Symbiosis-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-purple)
-![Version](https://img.shields.io/badge/version-3.3.0-blue)
+![Version](https://img.shields.io/badge/version-3.8.0-blue)
 
 ---
 
@@ -48,7 +48,7 @@
 │  Round 20: AI asks "Python version?" ← Forgot again!       │
 │                                                             │
 │  Result: Users repeatedly answer the same questions         │
-─────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────┘
 ```
 
 **Evolution's Solution**:
@@ -264,7 +264,7 @@
     ├── VERSION_HISTORY.md                    # Version history
     ├── DESIGN_V3.1.0.md                      # Design document
     ├── EVOLUTION_RULES_AND_LOGIC_V3.md       # System rules
-    ├── EXPORT_AND_ANALYSIS_DESIGN.md         # Export design (v3.3.0)
+    ├── EXPORT_AND_ANALYSIS_DESIGN.md         # Export design (v3.8.0)
     ├── *.zh-CN.md                            # Chinese versions of above
     ├── agents/                               # Agent configuration
     │   ├── domain.md
@@ -323,8 +323,7 @@ User inputs /evolution
 | Command | Description |
 |---------|-------------|
 | `/evolution` | Full sync (all knowledge extraction) |
-| `/evolution init` | Initial sync — analyze full conversation history, build knowledge base from scratch |
-| `/evolution --history` | Analyze persisted conversation history files (cross-session) |
+| `/evolution-init` | Initial sync — analyze full conversation history, build knowledge base from scratch |
 | `/kb-sync` | Sync knowledge base only |
 | `/growth-sync` | Generate learning notes only |
 | `/alignment-sync` | Check alignment items only |
@@ -447,7 +446,7 @@ See [Installation Guide](docs/INSTALLATION_GUIDE.md) for full instructions.
 Open Claude Code in your project, then:
 
 ```bash
-/evolution init   # First time: analyze full conversation, build knowledge base
+/evolution-init  # First time: analyze full conversation, build knowledge base
 /evolution        # Subsequent: incremental sync
 ```
 
@@ -484,7 +483,7 @@ Full bilingual documentation is in the [`docs/`](docs/) directory.
 
 1. [Design Document](docs/DESIGN_V3.1.0.md)
 2. [System Rules](docs/EVOLUTION_RULES_AND_LOGIC_V3.md)
-3. [Export & Analysis Design](docs/EXPORT_AND_ANALYSIS_DESIGN.md) (v3.3.0)
+3. [Export & Analysis Design](docs/EXPORT_AND_ANALYSIS_DESIGN.md) (v3.8.0)
 4. [Historical docs](docs/archive/) (V1/V2 era)
 
 ### Chinese Versions
