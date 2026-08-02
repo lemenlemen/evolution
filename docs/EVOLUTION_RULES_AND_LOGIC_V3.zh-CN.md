@@ -1,8 +1,6 @@
 # Evolution V3 - 系统规则与运行逻辑
 
-> 🌐 **语言 / Language**: [中文](EVOLUTION_RULES_AND_LOGIC_V3.zh-CN.md) | [English](EVOLUTION_RULES_AND_LOGIC_V3.md)
-
-> **版本**：3.3.0（2026-07-31）  
+> **版本**：3.8.0（2026-08-01）  
 > **基于**：V2 版本经验 + 简化需求
 
 > **版本历史**：详见 [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)

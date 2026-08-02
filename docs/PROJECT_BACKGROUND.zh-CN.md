@@ -1,10 +1,8 @@
 # Evolution 项目背景
 
-> 🌐 **语言 / Language**: [中文](PROJECT_BACKGROUND.zh-CN.md) | [English](PROJECT_BACKGROUND.md)
-
-> **版本**：3.3.0（2026-07-31）  
+> **版本**：3.8.0（2026-08-01）  
 > **作者**：lemen  
-> **状态**：已实现（V3.3.0）
+> **状态**：已实现（V3.8.0）
 
 > **版本历史**：详见 [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)
 
@@ -280,6 +278,14 @@
 |------|------|------|
 | v1.0 | 2026-07-21 | 初始版本（Slash Command） |
 | v2.0 | 2026-07-28 | 重构为 Skill 系统（渐进式披露） |
+| v3.0 | 2026-07-28 | 删除 auto 版本，简化系统 |
+| v3.1 | 2026-07-29 | 添加初始化命令、对话导出机制 |
+| v3.3 | 2026-07-30 | 修复 JSON 序列化崩溃、CJK token 估算、cleanup 安全等 |
+| v3.4 | 2026-07-31 | 模块化重构，SKILL.md 拆分，config.yaml 统一配置 |
+| v3.5 | 2026-07-31 | 基于 writing-great-skills 规则重构，SKILL.md 精简 |
+| v3.6 | 2026-08-01 | 将 `/evolution init` 拆分为独立命令 `/evolution-init` |
+| v3.7 | 2026-08-01 | 修复 `/evolution-init` 命令，全量历史导出 via evolution-export.py |
+| v3.8 | 2026-08-01 | 修复三个 bug：强制脚本+禁止手动 glob、find_jsonl_file、验证机制 |
 
 ---
 
