@@ -1,8 +1,6 @@
 # 导出和分析对话内容 - 设计方案
 
-> 🌐 **语言 / Language**: [中文](EXPORT_AND_ANALYSIS_DESIGN.zh-CN.md) | [English](EXPORT_AND_ANALYSIS_DESIGN.md)
-
-> **版本**：3.3.0
+> **版本**：3.8.0
 > **日期**：2026-07-31
 > **作者**：lemen
 > **状态**：设计完成，已修复并验证
@@ -13,6 +11,11 @@
 
 | 版本 | 日期 | 主要变更 |
 |------|------|----------|
+| 3.8.0 | 2026-08-01 | 修复三个 bug：强制脚本执行并禁用手动 glob、修复 find_jsonl_file 返回所有文件、新增验证机制 |
+| 3.7.0 | 2026-08-01 | 修复 `/evolution-init` 命令，调用 `evolution-export.py` 导出全量历史，防止采样 |
+| 3.6.0 | 2026-08-01 | 将 `/evolution init` 拆分为独立命令 `/evolution-init`，区分初始化与增量同步 |
+| 3.5.0 | 2026-07-31 | 基于 writing-great-skills 规则重构，SKILL.md 从 96 行精简至 37 行 |
+| 3.4.0 | 2026-07-31 | 模块化重构，SKILL.md 拆分，config.yaml 统一配置 |
 | 3.3.0 | 2026-07-31 | 修复 JSON 序列化崩溃、增量单位漂移、Windows 编码、token 估算偏低（CJK 系数 1.5→1.0）、cleanup 安全、文件句柄泄漏等多项问题 |
 | 3.2.1 | 2026-07-30 | 更新分页参数：80K → 150K（基于注意力研究） |
 | 3.2.0-draft | 2026-07-29 | 初始设计，基于 200K 窗口假设 |
@@ -65,7 +68,7 @@ v3.3.0 的 90K **估算** → 实际 ~150K（**在 200K 硬上限内**）
    - **合成/分析任务的有效上下文：约最大窗口的 20-30%**
    - 对于 1M 窗口：合成有效约 200-300K
 
-## 90K 的计算（v3.3.0）
+## 90K 的计算（v3.3.0，v3.8.0 仍沿用）
 
 有效上下文 200-300K（合成任务） - 其他分配 98K（8K 指令 + 10K 读 + 10K 写 + 20K 输出 + 50K 开销） = chunk 内容上限 102-202K，取 ~90K 作为目标（v3.3.0 考虑 CJK 系数修正后）。
 
@@ -87,6 +90,8 @@ v3.3.0 的 90K **估算** → 实际 ~150K（**在 200K 硬上限内**）
 
 ## 0. 前置数据分析
 
+> **说明**：以下统计数据为代表性示例数据，用于说明设计方案的分析依据，具体数值已做取整处理。
+
 在设计方案前，对实际 JSONL 文件进行了全面分析，以下为关键发现：
 
 ### 0.1 文件概况
@@ -102,44 +107,44 @@ v3.3.0 的 90K **估算** → 实际 ~150K（**在 200K 硬上限内**）
 
 | 类型 | 数量 | 说明 |
 |------|------|------|
-| assistant | 2,015 | AI 回复（含 text/thinking/tool_use 块） |
-| user | 1,078 | 用户消息（含 text/tool_result/image 块） |
-| file-history-snapshot | 326 | 文件历史快照（元数据，可忽略） |
-| system | 305 | 系统消息 |
-| last-prompt | 300 | 最近提示（元数据，可忽略） |
-| mode / permission-mode / ai-title | 各 291 | 模式/权限/标题（元数据，可忽略） |
-| attachment | 251 | 附件 |
-| queue-operation | 78 | 队列操作（元数据，可忽略） |
-| file-history-delta | 9 | 文件增量（元数据，可忽略） |
+| assistant | ~2,000 | AI 回复（含 text/thinking/tool_use 块） |
+| user | ~1,100 | 用户消息（含 text/tool_result/image 块） |
+| file-history-snapshot | ~330 | 文件历史快照（元数据，可忽略） |
+| system | ~300 | 系统消息 |
+| last-prompt | ~300 | 最近提示（元数据，可忽略） |
+| mode / permission-mode / ai-title | 各 ~290 | 模式/权限/标题（元数据，可忽略） |
+| attachment | ~250 | 附件 |
+| queue-operation | ~80 | 队列操作（元数据，可忽略） |
+| file-history-delta | ~10 | 文件增量（元数据，可忽略） |
 
 ### 0.3 内容块分布
 
-**assistant 内容块（4,015 个）：**
-- tool_use: 793（工具调用，如 Bash/Edit/Write/Read）
-- thinking: 776（思考过程）
-- text: 446（文本回复）
+**assistant 内容块（~4,000 个）：**
+- tool_use: ~800（工具调用，如 Bash/Edit/Write/Read）
+- thinking: ~780（思考过程）
+- text: ~450（文本回复）
 
 **user 内容块：**
-- tool_result: 793（工具返回结果）
-- string: 248（用户直接输入文本）
-- text: 37（文本块）
-- image: 15（图片）
+- tool_result: ~800（工具返回结果）
+- string: ~250（用户直接输入文本）
+- text: ~40（文本块）
+- image: ~15（图片）
 
-**工具调用分布：** Bash(294) > Edit(178) > Write(112) > Read(107) > Agent(45) > GitHub MCP(33) > WebSearch(12)
+**工具调用分布：** Bash(~300) > Edit(~180) > Write(~110) > Read(~110) > Agent(~45) > GitHub MCP(~33) > WebSearch(~12)
 
 ### 0.4 Token 估算（关键约束）
 
 | 内容类别 | 估算 Token 数 | 说明 |
 |----------|---------------|------|
-| tool_use 输入 | ~251K | 工具调用参数（命令、文件内容等） |
-| tool_result 输出 | ~191K | 工具返回结果（命令输出、文件内容等） |
-| user_text | ~114K | 用户直接输入 |
-| assistant_text | ~101K | AI 文本回复 |
+| tool_use 输入 | ~250K | 工具调用参数（命令、文件内容等） |
+| tool_result 输出 | ~190K | 工具返回结果（命令输出、文件内容等） |
+| user_text | ~110K | 用户直接输入 |
+| assistant_text | ~100K | AI 文本回复 |
 | thinking | ~60K | AI 思考过程 |
-| **总计** | **~716K** | 占 1M 原始窗口约 72%，远超合成有效上下文（200-300K） |
-| 过滤后（去 thinking + tool_result） | ~465K | 仍超合成有效上下文（200-300K） |
+| **总计** | **~720K** | 占 1M 原始窗口约 72%，远超合成有效上下文（200-300K） |
+| 过滤后（去 thinking + tool_result） | ~470K | 仍超合成有效上下文（200-300K） |
 
-**核心矛盾：716K tokens 需要被分析，但 sub agent 上下文窗口为 1M tokens，但合成/分析任务的有效上下文约 200-300K，仍需分页处理。**
+**核心矛盾：~720K tokens 需要被分析，但 sub agent 上下文窗口为 1M tokens，但合成/分析任务的有效上下文约 200-300K，仍需分页处理。**
 
 ---
 
@@ -150,7 +155,7 @@ v3.3.0 的 90K **估算** → 实际 ~150K（**在 200K 硬上限内**）
 ```
 ┌─────────────────────────────────────────────────────┐
 │                    主 Agent（用户交互层）              │
-│  接收 /evolution init 或 /evolution --export        │
+│  接收 /evolution-init 或 /evolution        │
 │  派发 sub agent，显示最终摘要                         │
 └──────────────────────┬──────────────────────────────┘
                        │ 触发
@@ -380,7 +385,7 @@ tool_result:     191K tokens →  38K（20%保留）
 
 ```json
 {
-  "version": "3.3.0",
+  "version": "3.8.0",
   "last_sync": {
     "timestamp": "<timestamp>",
     "line_number": 5000,
@@ -438,7 +443,7 @@ tool_result:     191K tokens →  38K（20%保留）
 **增量导出流程：**
 
 ```
-用户输入 /evolution --export（或 /evolution init 已执行过）
+用户输入 /evolution（或 /evolution-init 已执行过）
     ↓
 主 Agent 触发 Sub Agent
     ↓
@@ -978,11 +983,11 @@ drwxr-xr-x 1 user 1000 0 Jul 29 23:00 ./
 
 **sync-state.json 完整结构：**
 
-> 注：其中 `version` 字段记录 sync-state 数据结构 / 导出逻辑的版本号，跟随导出方案版本同步更新（当前 3.3.0），用于后续版本的旧状态迁移；它与文档版本号同值但语义独立。
+> 注：其中 `version` 字段记录 sync-state 数据结构 / 导出逻辑的版本号，跟随导出方案版本同步更新（当前 3.8.0），用于后续版本的旧状态迁移；它与文档版本号同值但语义独立。
 
 ```json
 {
-  "version": "3.3.0",
+  "version": "3.8.0",
   "project_path": "<project-root>",
   "jsonl_path": "~/.claude/projects/<project-hash>/<session-uuid>.jsonl",
   "last_sync": {
@@ -1298,7 +1303,7 @@ Phase 5: 测试与优化
 ### 8.1 全量导出流程
 
 ```
-用户输入：/evolution init
+用户输入：/evolution-init
     │
     ▼
 主 Agent：触发 Sub Agent
@@ -1347,7 +1352,7 @@ Sub Agent 执行：
 ### 8.2 增量导出流程
 
 ```
-用户输入：/evolution --export
+用户输入：/evolution
     │
     ▼
 主 Agent：触发 Sub Agent

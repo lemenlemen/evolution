@@ -1,9 +1,11 @@
 # Evolution Installation Guide
 
-> **Version**: 3.3.0 (2026-07-31)  
-> **Supported Platforms**: Windows / macOS / Linux
+🌐 **Language / 语言**: [English](INSTALLATION_GUIDE.md) | [中文](INSTALLATION_GUIDE.zh-CN.md)
 
-> **Version History**: See [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)
+> **Version**: 3.8.0 (2026-08-01)
+> **Supported platforms**: Windows / macOS / Linux
+
+> **Version history**: See [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)
 
 ---
 
@@ -13,8 +15,8 @@
 
 | Item | Requirement |
 |------|-------------|
-| **Claude Code** | Latest version (with Skill system support) |
-| **Operating System** | Windows 10+ / macOS 10.15+ / Ubuntu 18.04+ |
+| **Claude Code** | Latest version (Skill system support) |
+| **Operating system** | Windows 10+ / macOS 10.15+ / Ubuntu 18.04+ |
 | **Shell** | Git Bash / Zsh / Bash |
 
 ### 1.2 Verify Claude Code Version
@@ -23,7 +25,7 @@
 claude --version
 ```
 
-**Expected Output**:
+**Expected output**:
 ```
 claude version 2.1.x or higher
 ```
@@ -44,7 +46,7 @@ mkdir -p .claude/skills/evolution
 
 ### 2.2 Create SKILL.md
 
-Create a `SKILL.md` file in the `.claude/skills/evolution/` directory, content reference:
+Create a `SKILL.md` file under `.claude/skills/evolution/`, refer to:
 [SKILL.md](https://github.com/lemenlemen/evolution/blob/main/.claude/skills/evolution/SKILL.md)
 
 Or copy from GitHub:
@@ -72,7 +74,7 @@ Copy the following 8 files to `evolution/knowledge-base/`:
 - `alignment.md` - Alignment checklist
 - `decisions.md` - Decision log
 
-Template files reference: [knowledge-base](https://github.com/lemenlemen/evolution/tree/main/evolution/knowledge-base)
+Template file reference: [knowledge-base](https://github.com/lemenlemen/evolution/tree/main/evolution/knowledge-base)
 
 ---
 
@@ -81,7 +83,7 @@ Template files reference: [knowledge-base](https://github.com/lemenlemen/evoluti
 ### 3.1 Check Directory Structure
 
 ```bash
-# Check Skill file
+# Check Skill files
 ls -la .claude/skills/evolution/
 
 # Should show:
@@ -104,12 +106,12 @@ ls -la evolution/knowledge-base/
 ### 3.2 Verify Skill Loading
 
 ```
-Input: /context
+Enter: /context
 ```
 
 **Observe the Skills section**:
 
-**Expected Result**:
+**Expected result**:
 ```
 Project
 ── evolution: < 50 tokens    ← Should be displayed
@@ -118,10 +120,10 @@ Project
 ### 3.3 Test Manual Trigger
 
 ```
-Input: /evolution
+Enter: /evolution
 ```
 
-**Expected Behavior**:
+**Expected behavior**:
 ```
 AI: Let me read kb-index.md to understand the knowledge base overview...
     [Reading kb-index.md]
@@ -136,7 +138,7 @@ AI: Done!
 
 ### Problem 1: Skill Not Showing
 
-**Possible Causes**:
+**Possible causes**:
 - Frontmatter format error
 - Incorrect directory structure
 
@@ -158,24 +160,24 @@ head -10 .claude/skills/evolution/SKILL.md
 # ---
 ```
 
-### Problem 2: AI Reads Everything at Once
+### Problem 2: AI Reads All Files at Once
 
-**Possible Causes**:
-- No explicit progressive read instructions in SKILL.md
+**Possible causes**:
+- No explicit progressive reading instructions in SKILL.md
 
 **Solution**:
-- Check if SKILL.md has a "Progressive Read Rules" section
+- Check if SKILL.md has a "progressive reading rules" section
 - Confirm the instructions explicitly say "do not read all files at once"
 
 ### Problem 3: Auto-Trigger Not Working
 
-**Possible Causes**:
+**Possible causes**:
 - `disable-model-invocation: true` (should be `false`)
-- `when_to_use` description is unclear
+- `description` trigger keywords are unclear
 
 **Solution**:
 - Check that frontmatter has `disable-model-invocation: false`
-- Improve the `when_to_use` description
+- Improve the `description` field trigger keywords
 
 ---
 
@@ -185,19 +187,19 @@ head -10 .claude/skills/evolution/SKILL.md
 
 **Steps**:
 
-1. **Backup V2 Files**
+1. **Backup V2 files**
    ```bash
    # Backup the old knowledge base
    cp -r evolution-manual/knowledge-base evolution-manual/knowledge-base.v2.backup
    ```
 
-2. **Migrate Knowledge Base**
+2. **Migrate knowledge base**
    ```bash
    # Move files from old directory to new directory
    mv evolution-manual/knowledge-base/*.md evolution/knowledge-base/
    ```
 
-3. **Delete Old Directory**
+3. **Delete old directory**
    ```bash
    # Remove the empty old directory
    rmdir evolution-manual/knowledge-base/
@@ -211,9 +213,9 @@ head -10 .claude/skills/evolution/SKILL.md
 
 ---
 
-## 6. Uninstallation Guide
+## 6. Uninstall Guide
 
-### 6.1 Complete Uninstallation
+### 6.1 Full Uninstall
 
 ```bash
 # Remove Skill
@@ -263,7 +265,7 @@ git commit -m "chore: update knowledge base"
 git add .claude/skills/evolution/
 git commit -m "feat: add evolution skill"
 
-# Team members automatically get it after cloning
+# Team members will automatically get it after cloning
 ```
 
 ---
@@ -278,10 +280,10 @@ git commit -m "feat: add evolution skill"
 
 ### 8.2 Project Documentation
 
-- [Design Document](./DESIGN_V3.1.0.md)
-- [Project Background](./PROJECT_BACKGROUND.md)
-- [Version History](./VERSION_HISTORY.md)
+- [Design document](./DESIGN_V3.1.0.md)
+- [Project background](./PROJECT_BACKGROUND.md)
+- [Version history](./VERSION_HISTORY.md)
 
 ---
 
-**Installation complete! Start using Evolution v3.1.0.**
+**Installation complete! Start using Evolution v3.8.0.**

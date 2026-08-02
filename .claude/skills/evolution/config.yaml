@@ -1,0 +1,40 @@
+# Evolution 配置文件
+# 版本：3.8.0（2026-08-01）
+
+# 分页参数
+pagination:
+  target_chunk_tokens: 90000    # 90K 目标（v3.3.0 考虑 CJK 系数修正后）
+  max_chunk_tokens: 200000      # 200K 硬上限
+  min_chunk_tokens: 40000       # 40K 最小值
+
+# Token 估算参数
+token_estimation:
+  cjk_chars_per_token: 1.0      # 中文：1.0 字符/token（v3.3.0 修正）
+  non_cjk_chars_per_token: 4.0  # 英文/代码：4 字符/token
+
+# 窗口分配
+window_allocation:
+  instruction_tokens: 8000      # 分析指令 ~8K
+  kb_read_tokens: 10000         # 知识库读取 ~10K
+  kb_write_tokens: 10000        # 知识库写入 ~10K
+  output_tokens: 20000          # 输出空间 ~20K
+  overhead_tokens: 50000        # 模型内部开销 ~50K
+  safety_margin: 812000         # 安全余量 ~812K
+  usage_rate: 0.19              # 实际使用率 ~19%
+
+# 状态标记
+status_markers:
+  draft: "[D]"                  # AI 提取，未经用户验证
+  verified: "[V]"               # 用户明确确认或工具验证
+  deprecated: "[X]"             # 已废弃或已证实错误
+
+# 知识库位置
+knowledge_base:
+  location: "evolution/knowledge-base/"
+
+# 导出机制
+export:
+  method: "evolution-export.py（唯一方式）"
+  modes:
+    full: "全量导出当前项目的全部历史对话"
+    incremental: "增量导出当前项目的新增对话"
