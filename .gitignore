@@ -1,2 +1,5 @@
 # Project-local configuration, not for GitHub
 CLAUDE.md
+# Python cache
+__pycache__/
+*.pyc
