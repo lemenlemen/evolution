@@ -1,7 +1,5 @@
 # Evolution 设计文档 v3.1.0
 
-> 🌐 **语言 / Language**: [中文](DESIGN_V3.1.0.zh-CN.md) | [English](DESIGN_V3.1.0.md)
-
 > **版本**：3.1.0
 > **日期**：2026-07-29
 > **状态**：设计完成
@@ -20,8 +18,7 @@
 
 | 文件 | 用途 | 读者 |
 |------|------|------|
-| `CLAUDE.md` | 项目配置 | AI |
-| `.claude/skills/evolution/SKILL.md` | 执行指令 | AI |
+| `.claude/skills/evolution/SKILL.md` | Skill 定义 | AI |
 | `docs/` | 设计文档 | 人类 |
 
 ---
@@ -177,12 +174,12 @@ Sub agent 在后台：
 | v3.0.0 | 2026-07-28 | 简化系统，删除 auto 版本 |
 | v2.1.0 | 2026-07-28 | 写入审核机制 |
 | v2.0.0 | 2026-07-28 | Skill 系统迁移 |
-| v1.0.0 | 2026-07-24 | 初始版本 |
+| v1.0.0 | 2026-07-21 | 初始版本 |
 
 ---
 
 ##  参考文档
 
 - [SKILL.md](.claude/skills/evolution/SKILL.md) - 执行指令
-- [CLAUDE.md](CLAUDE.md) - 项目配置
+- [SKILL.md](../.claude/skills/evolution/SKILL.md) - Skill 定义
 - [README.md](README.md) - 用户文档

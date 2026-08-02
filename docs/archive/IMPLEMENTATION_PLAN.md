@@ -12,9 +12,9 @@
 
 | 任务 | 状态 | 说明 |
 |------|------|------|
-| **V1 版本回顾** | ✅ 完成 | `docs/V1_REVIEW.md` |
-| **Skill 加载机制研究** | ✅ 完成 | `docs/SKILL_LOADING_MECHANISM.md` |
-| **V2 设计文档** | ✅ 完成 | `docs/V2_DESIGN.md` |
+| **V1 版本回顾** | ✅ 完成 | `V1_REVIEW.md` |
+| **Skill 加载机制研究** | ✅ 完成 | `SKILL_LOADING_MECHANISM.md` |
+| **V2 设计文档** | ✅ 完成 | `V2_DESIGN.md` |
 | **旧版本清理** | ✅ 完成 | 删除 `.claude/agents/`、`.claude/commands/`、`.claude/skills/` |
 
 ### 1.2 待实施

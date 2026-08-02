@@ -34,7 +34,7 @@
 
 ### 2. EVOLUTION_RULES_AND_LOGIC_V2.md 更新
 
-**文件位置**：`docs/EVOLUTION_RULES_AND_LOGIC_V2.md`
+**文件位置**：`EVOLUTION_RULES_AND_LOGIC_V2.md`
 
 **更新内容**：
 - ✅ 新增 1.3 节"双向功能"
@@ -165,18 +165,18 @@
 | 文档 | 更新内容 |
 |------|---------|
 | `SKILL.md` | 新增双向功能章节 |
-| `docs/EVOLUTION_RULES_AND_LOGIC_V2.md` | 新增 1.3 节双向功能 |
+| `EVOLUTION_RULES_AND_LOGIC_V2.md` | 新增 1.3 节双向功能 |
 
 ### 原文档保留
 
 ✅ 所有原文档均保留：
-- `docs/V1_REVIEW.md`
-- `docs/V2_DESIGN.md`
-- `docs/SKILL_LOADING_MECHANISM.md`
-- `docs/IMPLEMENTATION_PLAN.md`
-- `docs/STATUS.md`
-- `docs/V2_TEST_GUIDE.md`
-- `docs/INSTALLATION_GUIDE_V2.md`
+- `V1_REVIEW.md`
+- `V2_DESIGN.md`
+- `SKILL_LOADING_MECHANISM.md`
+- `IMPLEMENTATION_PLAN.md`
+- `STATUS.md`
+- `V2_TEST_GUIDE.md`
+- `INSTALLATION_GUIDE_V2.md`
 
 ---
 
@@ -187,7 +187,7 @@
 cat .claude/skills/evolution/SKILL.md
 
 # 2. 查看更新后的规则文档
-cat docs/EVOLUTION_RULES_AND_LOGIC_V2.md
+cat EVOLUTION_RULES_AND_LOGIC_V2.md
 
 # 3. 测试双向功能
 /evolution

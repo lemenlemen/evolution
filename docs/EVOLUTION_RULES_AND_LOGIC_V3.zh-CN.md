@@ -1,8 +1,6 @@
 # Evolution V3 - 系统规则与运行逻辑
 
-> 🌐 **语言 / Language**: [中文](EVOLUTION_RULES_AND_LOGIC_V3.zh-CN.md) | [English](EVOLUTION_RULES_AND_LOGIC_V3.md)
-
-> **版本**：3.3.0（2026-07-31）  
+> **版本**：3.8.0（2026-08-01）  
 > **基于**：V2 版本经验 + 简化需求
 
 > **版本历史**：详见 [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)
@@ -62,7 +60,7 @@ Evolution 是一个**人机共生进化系统**，让 AI 和人类在协作中�
 |----------|------|------|
 | `.claude/skills/evolution/SKILL.md` | Skill 定义和执行指令 | AI |
 | `evolution/knowledge-base/` | 知识库数据 | AI + 人类 |
-| `docsV3/` | 设计文档 | 人类 |
+| `docs/` | 设计文档 | 人类 |
 
 ---
 
@@ -71,7 +69,7 @@ Evolution 是一个**人机共生进化系统**，让 AI 和人类在协作中�
 ### 4.1 初始化命令（首次安装）
 
 ```bash
-/evolution init
+/evolution-init
 ```
 
 **执行方式**：

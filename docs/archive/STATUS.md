@@ -11,10 +11,10 @@
 
 | 任务 | 文档 | 状态 |
 |------|------|------|
-| **V1 版本回顾** | `docs/V1_REVIEW.md` | ✅ 完成 |
-| **Skill 加载机制研究** | `docs/SKILL_LOADING_MECHANISM.md` | ✅ 完成 |
-| **V2 设计文档** | `docs/V2_DESIGN.md` | ✅ 完成 |
-| **实施计划** | `docs/IMPLEMENTATION_PLAN.md` | ✅ 完成 |
+| **V1 版本回顾** | `V1_REVIEW.md` | ✅ 完成 |
+| **Skill 加载机制研究** | `SKILL_LOADING_MECHANISM.md` | ✅ 完成 |
+| **V2 设计文档** | `V2_DESIGN.md` | ✅ 完成 |
+| **实施计划** | `IMPLEMENTATION_PLAN.md` | ✅ 完成 |
 | **旧版本清理** | - | ✅ 已删除 `.claude/agents/`、`.claude/commands/`、`.claude/skills/` |
 
 ###  待实施
@@ -61,7 +61,7 @@
 
 ```bash
 # 1. 查看 V2 设计文档
-cat docs/V2_DESIGN.md
+cat V2_DESIGN.md
 
 # 2. 创建 V2 Skill
 mkdir -p .claude/skills/evolution/

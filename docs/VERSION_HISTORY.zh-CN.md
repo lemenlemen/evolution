@@ -1,9 +1,7 @@
 # Evolution 版本历史
 
-> 🌐 **语言 / Language**: [中文](VERSION_HISTORY.zh-CN.md) | [English](VERSION_HISTORY.md)
-
-> **当前版本**：3.3.0
-> **发布日期**：2026-07-31
+> **当前版本**：3.8.0
+> **发布日期**：2026-08-01
 
 ---
 
@@ -11,7 +9,12 @@
 
 | 版本 | 日期 | 主要变更 |
 |------|------|----------|
-| v3.3.0 | 2026-07-31 | 修复 JSON 序列化崩溃、增量单位漂移、Windows 编码、token 估算偏低（CJK 系数 1.5→1.0）、cleanup 安全、文件句柄泄漏等多项问题 |
+| v3.8.0 | 2026-08-01 | 修复三个 bug：强制脚本 + 禁止手动 glob、修复 find_jsonl_file 返回所有文件、增加验证机制 |
+| v3.7.0 | 2026-08-01 | 修复 `/evolution-init` 命令，调用 `evolution-export.py` 导出全部历史，防止采样 |
+| v3.6.0 | 2026-08-01 | 修复 `/evolution init` 为独立命令 `/evolution-init`，区分初始化和增量同步 |
+| v3.5.0 | 2026-07-31 | 基于 writing-great-skills 规则重构，SKILL.md 从 96 行缩减至 37 行 |
+| v3.4.0 | 2026-07-31 | 模块化重构，SKILL.md 拆分，config.yaml 统一配置 |
+| v3.3.0 | 2026-07-30 | 修复 JSON 序列化崩溃、增量单位漂移、Windows 编码、token 估算偏低（CJK 系数 1.5→1.0）、cleanup 安全、文件句柄泄漏等多项问题 |
 | v3.2.1 | 2026-07-30 | 更新分页参数：80K → 150K（基于注意力研究） |
 | v3.2.0-draft | 2026-07-29 | 初始设计，基于 200K 窗口假设 |
 | v3.1.0 | 2026-07-29 | 添加初始化命令、对话导出机制、sub agent 执行设计 |
@@ -126,11 +129,11 @@ mv evolution-manual evolution
   - 现有条目添加 `[V]` 标记
 
 **设计文档**：
-- `docs/FABLE_REVIEW.md` - AI reviewer 的深度评审
+- `docs/FABLE_REVIEW.md` - AI review 的深度评审
 - `docs/PROJECT_BACKGROUND.md` - 项目背景（用户原始需求）
 
 **改进原因**：
-- AI review指出"写入审核机制缺失"是致命缺陷
+- AI review 评审指出"写入审核机制缺失"是致命缺陷
 - 错误信息会形成自我强化循环
 - 需要简单的审核机制打破循环
 
@@ -165,11 +168,11 @@ mv evolution-manual evolution
 **设计文档**：
 - `docs/V2_DESIGN.md` - V2 设计文档
 - `docs/EVOLUTION_RULES_AND_LOGIC_V2.md` - 系统规则
-- `docs/INSTALLATION_GUIDE_V2.md` - 安装指南
+- `docs/archive/INSTALLATION_GUIDE_V2.md` - 安装指南
 - `docs/V2_TEST_GUIDE.md` - 测试指南
 - `docs/UPDATE_NOTES_V2.md` - 更新说明
 - `docs/PROJECT_BACKGROUND.md` - 项目背景
-- `docs/FABLE_REVIEW.md` - AI review
+- `docs/FABLE_REVIEW.md` - AI review 评审
 
 **改进原因**：
 - V1 使用 Slash Command，AI 不知道知识库存在
@@ -205,14 +208,18 @@ mv evolution-manual evolution
 | 2.1.0 | 2026-07-28 | MINOR | 写入审核机制 |
 | 3.0.0 | 2026-07-28 | MAJOR | 删除 auto 版本，简化系统 |
 | 3.1.0 | 2026-07-29 | MINOR | 添加初始化命令、对话导出机制 |
+| 3.2.0 | 2026-07-29 | MINOR | 基于 200K 窗口的分页设计 |
+| 3.2.1 | 2026-07-30 | PATCH | 更新分页参数：80K → 150K |
+| 3.3.0 | 2026-07-30 | PATCH | 修复 JSON 序列化、Windows 编码、token 估算、文件句柄泄漏 |
+| 3.4.0 | 2026-07-31 | MINOR | 模块化重构，SKILL.md 拆分，config.yaml |
+| 3.5.0 | 2026-07-31 | MINOR | 基于 writing-great-skills 规则重构 |
+| 3.6.0 | 2026-08-01 | MINOR | 将 `/evolution init` 拆分为 `/evolution-init` |
+| 3.7.0 | 2026-08-01 | PATCH | 修复 `/evolution-init`，防止采样 |
+| 3.8.0 | 2026-08-01 | PATCH | 修复三个 bug：强制脚本、find_jsonl_file、验证机制 |
 
 ---
 
 ## 未来规划
-
-### [3.2.0] - 计划中
-- 清理机制（stale 标记 + 自动归档）
-- 文件容量监控
 
 ### [4.0.0] - 规划中
 - 完整的四级状态模型
@@ -225,11 +232,10 @@ mv evolution-manual evolution
 
 | 文档 | 说明 |
 |------|------|
-| `docs/FABLE_REVIEW.md` | AI reviewer 的深度评审 |
+| `docs/archive/FABLE_REVIEW.md` | AI review 的深度评审 |
 | `docs/PROJECT_BACKGROUND.md` | 项目背景 |
-| `docs/V2_DESIGN.md` | V2 设计文档 |
-| `docs/EVOLUTION_RULES_AND_LOGIC_V2.md` | 系统规则 |
-| `docs/INSTALLATION_GUIDE_V2.md` | 安装指南 |
+| `docs/archive/V2_DESIGN.md` | V2 设计文档 |
+| `docs/archive/EVOLUTION_RULES_AND_LOGIC_V2.md` | V2 系统规则 |
 
 ---
 
