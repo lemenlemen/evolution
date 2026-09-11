@@ -1,12 +1,12 @@
 # Evolution Project Background
 
-> **Version**: 3.8.0 (2026-08-01)  
-> **Author**: lemen  
-> **Status**: Implemented (V3.8.0)
-
 🌐 **Language / 语言**: [English](PROJECT_BACKGROUND.md) | [中文](PROJECT_BACKGROUND.zh-CN.md)
 
-> **Version History**: See [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)
+> **Version**: 3.9.0 (2026-08-01)  
+> **Author**: lemen  
+> **Status**: Implemented (V3.9.0)
+
+> **Version history**: see [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)
 
 ---
 
@@ -16,35 +16,35 @@
 
 #### Pain Point 1: AI's "Amnesia"
 
-> AI often forgets important key information during long-running tasks, repeatedly makes the same mistakes, and even treats incorrect information as correct when passing it into context — forming a death loop.
+> When executing long-horizon tasks, AI often forgets important key information, repeatedly makes the same mistake, and even passes erroneous information into the context as if it were correct, thus forming an infinite loop.
 
 **Specific manifestations**:
-- Forgets environment configurations (e.g., Python version, network settings)
-- Repeats the same mistakes (e.g., using incorrect commands)
-- Propagates previous error information as correct information
-- Falls into death loops, unable to break free
+- Forgetting environment configuration (such as Python version, network configuration)
+- Repeatedly making the same mistake (such as using the wrong command)
+- Spreading previous erroneous information as if it were correct
+- Forming an infinite loop, unable to break free
 
 **Impact**:
-- Low efficiency — users need to remind AI repeatedly
-- Poor user experience — AI feels "unreliable"
-- Wasted time and resources
+- Low efficiency; the user needs to remind repeatedly
+- Poor user experience; AI feels "unreliable"
+- Wasting time and resources
 
 ---
 
-#### Pain Point 2: Human "Growth Deficit"
+#### Pain Point 2: Humanity's "Missing Growth"
 
-> From the moment a human assigns a task to AI until receiving the results, there may be N rounds of communication. The human may only be repeatedly reviewing and correcting errors, without learning any new knowledge or achieving effective self-improvement. This is truly regrettable.
+> From assigning a task to AI to receiving the result, there may be N rounds of communication. The human may just be repeatedly accepting and correcting, without learning new knowledge or achieving effective self-improvement. This is a great pity.
 
 **Specific manifestations**:
-- Users act merely as the "client" — submitting demands, reviewing, and receiving deliverables
-- No new knowledge is gained from the collaboration process
-- The next collaboration starts at the same level — no improvement
-- Repeated communication wastes time
+- The user is just the "client", proposing requirements, accepting, and receiving results
+- No new knowledge is learned from the collaboration process
+- The next collaboration is at the same level, with no improvement
+- Repeated communication wastes time cost
 
 **Impact**:
-- User capabilities do not grow
+- The user's abilities do not grow
 - Collaboration efficiency cannot improve
-- Users remain "outsiders" and struggle to express requirements accurately
+- The user remains a "layman", unable to express requirements accurately
 
 ---
 
@@ -52,34 +52,34 @@
 
 ### 2.1 Understanding of LLMs
 
-> LLMs are already trained. Making them smarter is very difficult unless retrained — which is impractical for most people. So the only option is to add plugin/extension capabilities to LLMs. My understanding of this "harness" includes memory stores, MCP, Skill, Plugin, Web Search, and other tool invocations.
+> An LLM is already trained. Making it smarter is very hard unless it is retrained, which is impractical for ordinary people. So we can only add an extension to the LLM. This extension, in my understanding, is the harness—it can be a memory store, MCP, skill, plugin, web search, and other tool invocations.
 
 **Core viewpoints**:
-- Don't expect the LLM itself to become smarter
-- Enhance LLM capabilities through "plugins/extensions"
-- Extensions include: memory stores, MCP, Skill, Plugin, Web Search, etc.
+- We do not expect the LLM itself to become smarter
+- Enhance the LLM's capabilities through "extensions"
+- Extensions include: memory store, MCP, Skill, Plugin, Web Search, etc.
 
 ---
 
 ### 2.2 Understanding of Task Completion
 
-> Using AI to execute tasks — completing them and meeting expectations — is my most basic and direct goal. AI is smart enough, but it can be unstable, may explore down wrong paths for a long time, and can even form death loops. This brings us back to point 1 above: add plugin tools to AI so it better understands our intentions and completes our tasks more smoothly.
+> Using AI to execute tasks, being able to complete them and meet expectations is my most basic and most direct goal. AI is smart enough, but it may be unstable, may explore and dig into a wrong path for a long time, and may even form an infinite loop. This calls for the point 1 I just mentioned: add extension tools to the AI so that it can better understand our intent and complete our tasks more smoothly.
 
 **Core viewpoints**:
-- Basic goal: complete tasks and meet expectations
-- AI's problems: unstable, may take detours, may enter death loops
-- Solution: add plugin tools to help AI better understand intent
+- Basic goal: complete the task and meet expectations
+- AI's problems: unstable, may take detours, may loop infinitely
+- Solution: add extension tools so AI understands intent better
 
 ---
 
 ### 2.3 Understanding of Human Growth
 
-> Humans should not merely serve as requirement proposers, process reviewers, and task deliverable receivers during AI task execution. They should also learn truly useful knowledge throughout the process, so that the next time they collaborate with AI, they can be more accurate, more efficient, more thorough, and more valuable.
+> In AI task execution, humans should not only act as the requirement proposer, process acceptor, and task result receiver. They should also learn genuinely useful knowledge in the process, so that the next collaboration with AI can be more accurate, more efficient, more thorough, and more valuable.
 
 **Core viewpoints**:
 - Humans should not just be the "client"
 - They should learn during the collaboration process
-- Next collaboration should be more accurate, efficient, thorough, and valuable
+- The next collaboration should be more accurate, efficient, thorough, and valuable
 
 ---
 
@@ -87,59 +87,59 @@
 
 ### 3.1 Requirement 1: Environment Awareness and Condition Notification
 
-> Let AI inform the human about what conditions are needed to complete the task, what conditions currently exist, what is still missing, and how it plans to handle it.
+> Let AI inform humans what conditions are needed to complete the task, what conditions currently exist, what is still missing, and how it plans to handle it.
 
 **Examples**:
-- Task 1 requires a WSL environment; Ubuntu is already available, but the network cannot pass through directly — the plan is to configure mirror mode to share and pass through the host network
-- Task 2 requires a local LLM; the computer has Ollama, but no model yet — the plan is to download the qwen4-36b model
+- Completing task 1 requires a WSL environment. Ubuntu is already available, but the network cannot pass through directly yet. The plan is to configure it into mirror mode to share the host's direct network.
+- Completing task 2 requires a local LLM. The current computer has Ollama, but no model yet. The plan is to download the qwen4-36b model.
 
 **Value**:
-- Lets users understand the full picture of the task
-- Knows current status and missing conditions
-- Understands AI's processing plan
+- Let the user understand the full picture of the task
+- Know the current state and missing conditions
+- Understand AI's handling plan
 
 ---
 
-### 3.2 Requirement 2: Easy-to-Understand Technical Explanations
+### 3.2 Requirement 2: Plain and Easy-to-Understand Technical Explanations
 
-> I'm a tech novice — I don't understand code or professional terminology. But I want to learn. However, comprehensive fine-grained learning seems impossible — there's no time. So this really tests AI: what to explain and how to explain it. The trade-offs are complex, and I haven't figured it all out myself.
+> I am a tech novice and do not understand code or many technical terms, but I want to learn. Yet full, detailed learning seems impossible—there is no time. So this heavily tests the AI: what to explain and how to explain it. The trade-offs here are complex, and I have not figured them out myself.
 
 **Specific challenges**:
-- When explaining code: cover the framework? Or focus on key impactful parts?
-- Select content to explain based on the user's basic profile?
-- How to explain complex professional techniques in a way that is accessible, vivid, illustrated, and easy to understand?
+- When explaining code, explain only the framework? Or the few key impactful ones?
+- Pick out corresponding content to explain based on the user's basic profile?
+- How to explain professional, complex technology in an accessible, vivid, illustrated, and easy-to-understand way?
 
 **Expectations**:
-- AI can adjust explanation depth based on user level
-- Easy to understand, avoiding excessive jargon
-- Vivid and illustrative, preferably with both text and images
+- AI can adjust the depth of explanation according to the user's level
+- Plain and easy to understand, avoiding excessive technical terms
+- Vivid; ideally illustrated with both text and images
 
 ---
 
 ### 3.3 Requirement 3: Prompt Improvement Guide
 
-> The requirements or problems I raise may not be concise or accurate enough. This can lead to repeated communication with AI, which costs significant time. So I want AI to give me a better prompt guide once a task reaches a milestone (i.e., after a certain number of communication rounds), teaching me how to write prompts for that task or problem in the most efficient and clear way.
+> The requirements or questions I propose may not be concise or accurate enough. This process may involve repeated communication with AI, which is actually a considerable time cost. So I want AI, when the task reaches a milestone (that is, after a certain number of communication rounds), to give me a better prompt guide, so I can learn how to write a prompt for this task or question in the most efficient and clearest way.
 
 **Value**:
-- Reduce time costs from repeated communication
-- Help users learn to express requirements better
-- Improve efficiency of the next collaboration
+- Reduce the time cost of repeated communication
+- Let the user learn how to express requirements better
+- Improve the efficiency of the next collaboration
 
 ---
 
 ### 3.4 Requirement 4: Honest Acceptance Notification
 
-> After many tasks are completed, AI cannot verify results the way humans do. For example, AI often verifies via CLI rather than GUI. The underlying verification may appear correct, but what humans see on the surface may actually have problems. In such cases, AI should honestly inform the human and let them perform a secondary verification.
+> After many tasks are completed, AI cannot accept them the way humans do. For example, much of the time AI accepts from the CLI rather than the GUI. The underlying acceptance may look correct, but the surface may actually have problems for humans. At this point, AI should honestly inform humans and let them accept again.
 
 **Specific scenarios**:
-- AI verifies via CLI, but humans need to verify via GUI
-- Underlying validation is correct, but the surface appears problematic
-- AI cannot control the desktop for visual verification (too costly)
+- AI accepts from the CLI, but humans need to accept from the GUI
+- Underlying verification is correct, but the surface looks problematic
+- AI cannot control the computer desktop for visual acceptance (high cost)
 
 **Expectations**:
-- AI honestly communicates verification limitations
-- Let humans decide whether secondary verification is needed
-- Don't hide problems or exaggerate results
+- AI honestly informs about the limitations of acceptance
+- Let humans decide whether acceptance is needed again
+- Do not conceal problems, do not exaggerate results
 
 ---
 
@@ -147,14 +147,16 @@
 
 ### 4.1 Operation Mode
 
-> This system runs essentially silently (though it can also be triggered manually). Sub agents run quietly in the background without entering the main session tasks or polluting the main conversation. Humans are barely aware of it.
+> This system is **manually triggered**: after the user enters `/evolution-init` or `/evolution`, sub agents
+> execute export and analysis in the background, without entering the main session task, so as to pollute the main conversation as little as possible.
+> (v3.0.0 has removed the auto-trigger version; auto-trigger exists only as a future plan and is not implemented.)
 
-**Core features**:
-- **Silent operation**: Does not interfere with the main conversation
-- **Background execution**: Sub agents work in the background
-- **No main conversation pollution**: Keeps the main session clean
-- **Barely noticeable to humans**: No active user intervention needed
-- **Supports manual triggering**: Users can also trigger it proactively
+**Core characteristics**:
+- **Manual trigger**: all synchronization requires the user to actively run `/evolution-init` / `/evolution`
+- **Background execution**: sub agents work in the background; the main agent only does scheduling and summary display
+- **No pollution of the main conversation**: knowledge base operations are completed in sub agents, keeping the main session clean
+
+> ⚠️ If not manually triggered for a long time, conversations during that period will not be exported and analyzed, and the knowledge base will stop updating.
 
 ---
 
@@ -163,26 +165,26 @@
 Based on the above requirements, the following design principles are distilled:
 
 | Principle | Description |
-|-----------|-------------|
-| **Task First** | The primary goal is completing the task, not running the system |
-| **Natural Occurrence** | Learning and knowledge accumulation happen naturally during task execution |
-| **Human Unaware** | Runs in the background without interfering with the main conversation |
-| **Progressive Growth** | Both AI and humans grow through collaboration |
-| **Honest Transparency** | AI honestly communicates limitations and problems |
+|------|------|
+| **Task first** | The primary goal is to complete the task, not to run the system |
+| **Natural occurrence** | Learning and accumulation occur naturally during task execution |
+| **Background isolation** | sub agents run in the background without disturbing the main conversation |
+| **Progressive growth** | Both AI and humans grow through collaboration |
+| **Honest and transparent** | AI honestly informs about limitations and problems |
 
 ---
 
 ## 5. Implementation Plan
 
-### 5.1 Technology Selection
+### 5.1 Technology Choice
 
-Based on the "plugin/extension" philosophy, Claude Code's **Skill system** is chosen as the implementation approach:
+Based on the "extension" concept, Claude Code's **Skill system** is chosen as the implementation plan:
 
 | Feature | Description |
-|---------|-------------|
-| **Progressive Disclosure** | Only the description is loaded at startup; full content loads on demand |
-| **Manual Trigger** | Users trigger manually via `/evolution` |
-| **Project-Level Storage** | Knowledge base is stored in `evolution/knowledge-base/` |
+|------|------|
+| **Progressive disclosure** | At startup only the description is loaded; full content is loaded on demand |
+| **Manual trigger** | The user triggers manually via `/evolution-init` / `/evolution` (no auto-trigger) |
+| **Project-level storage** | The knowledge base is stored in `evolution/knowledge-base/` |
 | **Separated from Auto Memory** | Does not pollute Claude Code's Auto Memory system |
 
 ---
@@ -196,36 +198,36 @@ Based on the "plugin/extension" philosophy, Claude Code's **Skill system** is ch
 │       └── evolution/
 │           └── SKILL.md              # Skill definition
 │
-├── evolution/                       # Knowledge base
+└── evolution/                       # knowledge base
     └── knowledge-base/
-        ├── kb-index.md               # Index
-        ├── facts.md                  # Key facts
-        ├── pitfalls.md               # Pitfalls
-        ├── state.md                  # Current state
-        ├── growth-notes.md           # Learning notes
+        ├── kb-index.md               # index
+        ├── facts.md                  # key facts
+        ├── pitfalls.md               # pitfalls
+        ├── state.md                  # current state
+        ├── growth-notes.md           # learning notes
         ├── prompt-improvements.md    # Prompt improvements
-        ├── alignment.md              # Alignment checklist
-        └── decisions.md              # Decision log
+        ├── alignment.md              # alignment checklist
+        └── decisions.md              # decision log
 ```
 
 ---
 
-### 5.3 Bidirectional Functionality
+### 5.3 Bidirectional Capabilities
 
-**Evolution is a bidirectional sync system**:
+**Evolution is a bidirectional synchronization system**:
 
-| Function | Description |
-|----------|-------------|
-| **📖 Read** | Lets AI know "what is already known" |
-| **✍️ Write** | Lets AI record "what has been newly learned" |
+| Capability | Description |
+|------|------|
+| **📖 Read** | Let AI know "what it already knows" |
+| **✍️ Write** | Let AI record "what it newly learned" |
 
-**Sync flow**:
+**Synchronization flow**:
 ```
-User inputs /evolution
+User enters /evolution
     ↓
-📖 Read phase → Understand existing knowledge
+📖 Read phase → understand existing knowledge
     ↓
-✍️ Write phase → Record new knowledge
+✍️ Write phase → record new knowledge
     ↓
 Report summary
 ```
@@ -237,63 +239,52 @@ Report summary
 ### 6.1 Benefits for AI
 
 | Benefit | Description |
-|---------|-------------|
-| **More Reliable** | Remembers key information, avoids repeated errors |
-| **More Stable** | Won't go too far down the wrong path |
-| **More Efficient** | Makes quick decisions based on historical experience |
-| **More Honest** | Truthfully reports limitations and problems |
+|------|------|
+| **More reliable** | Remembers key information, avoids repeated mistakes |
+| **More stable** | Will not go too far down a wrong path |
+| **More efficient** | Makes decisions quickly based on historical experience |
+| **More honest** | Truthfully informs about limitations and problems |
 
 ### 6.2 Benefits for Humans
 
 | Benefit | Description |
-|---------|-------------|
-| **Learn Knowledge** | Gain technical knowledge from the collaboration process |
-| **Improve Efficiency** | Learn to write better prompts |
-| **Understand the Full Picture** | Know the task's conditions and status |
-| **Participate in Verification** | Honest acceptance notifications let humans participate |
+|------|------|
+| **Learning knowledge** | Learn technical knowledge from the collaboration process |
+| **Improved efficiency** | Learn to write prompts better |
+| **Understanding the full picture** | Understand the task's conditions and state |
+| **Participating in acceptance** | Honest acceptance notification lets humans participate |
 
 ---
 
 ## 7. Success Metrics
 
-### 7.1 AI-Side Metrics
+### 7.1 AI-side Metrics
 
 | Metric | Target |
-|--------|--------|
-| **Repeated Error Rate** | Reduce by 80% |
-| **Task Completion Rate** | Improve by 50% |
-| **Context Consumption** | Save 66% (progressive disclosure) |
+|------|------|
+| **Repeated error rate** | Reduced by 80% |
+| **Task completion rate** | Increased by 50% |
+| **Context consumption** | Saved by 66% (progressive disclosure) |
 
-### 7.2 Human-Side Metrics
+### 7.2 Human-side Metrics
 
 | Metric | Target |
-|--------|--------|
-| **Learning Efficiency** | Learn 1–2 knowledge points per collaboration |
-| **Prompt Quality** | Reduce repeated communication rounds by 50% |
-| **User Satisfaction** | Improve by 30% |
+|------|------|
+| **Learning efficiency** | Learn 1-2 knowledge points per collaboration |
+| **Prompt quality** | 50% fewer repeated communication rounds |
+| **User satisfaction** | Increased by 30% |
 
 ---
 
 ## 8. Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| v1.0 | 2026-07-21 | Initial version (Slash Command) |
-| v2.0 | 2026-07-28 | Refactored to Skill system (progressive disclosure) |
-| v3.0 | 2026-07-28 | Removed auto version, simplified system |
-| v3.1 | 2026-07-29 | Added initialization command, conversation export mechanism |
-| v3.3 | 2026-07-30 | Fixed JSON serialization crash, CJK token estimation, cleanup safety |
-| v3.4 | 2026-07-31 | Modular refactoring, SKILL.md split, config.yaml unified configuration |
-| v3.5 | 2026-07-31 | Refactored based on writing-great-skills rules, SKILL.md streamlined |
-| v3.6 | 2026-08-01 | Split `/evolution init` into standalone command `/evolution-init` |
-| v3.7 | 2026-08-01 | Fixed `/evolution-init` command, full history export via evolution-export.py |
-| v3.8 | 2026-08-01 | Fixed three bugs: enforced script + disabled manual glob, find_jsonl_file, validation |
+For the complete version history, see [`docsV3/VERSION_HISTORY.md`](./VERSION_HISTORY.md).
 
 ---
 
 ## 9. References
 
-### 9.1 Project Documentation
+### 9.1 Project Documents
 
 - [Design Document](./DESIGN_V3.1.0.md)
 - [Installation Guide](./INSTALLATION_GUIDE.md)
@@ -309,12 +300,12 @@ Report summary
 
 ## 10. Conclusion
 
-> **Evolution is not a tool — it is a way of collaboration.**
+> **Evolution is not a tool, but a way of collaborating.**
 > 
-> It makes AI more reliable through collaboration, and makes humans more powerful through collaboration.
+> It makes AI more reliable through collaboration, and makes humans more capable through collaboration.
 > 
-> The ultimate goal: AI and humans growing together through collaboration.
+> Ultimately achieving: AI and humans growing together through collaboration.
 
 ---
 
-**End of Document**
+**End of document**

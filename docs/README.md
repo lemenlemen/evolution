@@ -1,9 +1,9 @@
-# Evolution V3 Documentation
+# Evolution Documentation
 
 🌐 **Language / 语言**: [English](README.md) | [中文](README.zh-CN.md)
 
-> **Version**: 3.8.0
-> **Last updated**: 2026-07-31
+> **Version**: 4.1.6
+> **Last updated**: 2026-09-11
 
 ---
 
@@ -11,42 +11,51 @@
 
 ```
 docs/
-├── README.md                      # This document (index)
-├── PROJECT_BACKGROUND.md          # Project background
-├── DESIGN_V3.1.0.md               # V3.1.0 design document (historical)
-├── INSTALLATION_GUIDE.md          # Installation guide
-├── VERSION_HISTORY.md             # Version history
-├── EXPORT_AND_ANALYSIS_DESIGN.md  # Export and analysis design (v3.8.0)
-├── EVOLUTION_RULES_AND_LOGIC_V3.md  # System rules (v3)
-└── archive/                       # Historical document archive
-    ├── V1_REVIEW.md               # V1 review
-    ├── V2_DESIGN.md               # V2 design
-    ├── V2_TEST_GUIDE.md           # V2 testing
-    ├── UPDATE_NOTES_V2.md         # V2 update notes
-    ├── EVOLUTION_RULES_AND_LOGIC_V2.md  # V2 rules
-    ├── FABLE_REVIEW.md            # AI review
-    ├── SKILL_LOADING_MECHANISM.md # Skill loading mechanism
-    ├── IMPLEMENTATION_PLAN.md     # V2 implementation plan
-    └── STATUS.md                  # V2 status
+├── README.md                        # This document (index)
+├── PROJECT_BACKGROUND.md            # Project background and pain points
+├── INSTALLATION_GUIDE.md            # Installation guide
+├── VERSION_HISTORY.md               # Version history
+├── DESIGN_V3.1.0.md                 # V3.1.0 design document (historical)
+├── EVOLUTION_RULES_AND_LOGIC_V3.md  # V3 system rules and logic (outdated)
+├── EXPORT_AND_ANALYSIS_DESIGN.md    # Export and analysis design
+├── ADVERSARIAL_AUDIT_v3.9.0.md      # Adversarial audit that drove V4 (Chinese only)
+├── v4/                              # V4 design documents (current)
+│   ├── DESIGN_V4.0.0.md             # V4 master design
+│   ├── design-v4-engine.md          # V4 sync engine layer
+│   └── design-v4-knowledge.md       # V4 knowledge layer (rolled back)
+└── archive/                         # Historical document archive
+    ├── V1_REVIEW.md                 # V1 review
+    ├── V2_DESIGN.md                 # V2 design
+    ├── V2_TEST_GUIDE.md             # V2 test guide
+    ├── UPDATE_NOTES_V2.md           # V2 update notes
+    ├── EVOLUTION_RULES_AND_LOGIC_V2.md # V2 rules
+    ├── FABLE_REVIEW.md              # Early deep review
+    ├── SKILL_LOADING_MECHANISM.md   # Skill loading mechanism study
+    ├── IMPLEMENTATION_PLAN.md       # V2 implementation plan
+    ├── STATUS.md                    # V2 status
+    └── evolution-manual-v2/         # Raw V2 knowledge base snapshot
 ```
+
+Every document above has a `.zh-CN.md` Chinese counterpart, except the two marked Chinese-only.
 
 ---
 
 ## Reading Order
 
 ### New users
-1. [PROJECT_BACKGROUND.md](./PROJECT_BACKGROUND.md) - Understand the project background and pain points
-2. [INSTALLATION_GUIDE.md](./INSTALLATION_GUIDE.md) - Install and verify
-3. [DESIGN_V3.1.0.md](./DESIGN_V3.1.0.md) - Learn design details (optional)
+1. [PROJECT_BACKGROUND.md](./PROJECT_BACKGROUND.md) — understand the pain points
+2. [INSTALLATION_GUIDE.md](./INSTALLATION_GUIDE.md) — install and verify
+3. [VERSION_HISTORY.md](./VERSION_HISTORY.md) — see what changed
 
 ### Upgrading users
-1. [VERSION_HISTORY.md](./VERSION_HISTORY.md) - Check version changes
-2. [INSTALLATION_GUIDE.md](./INSTALLATION_GUIDE.md) - Upgrade guide
+1. [VERSION_HISTORY.md](./VERSION_HISTORY.md) — version changes
+2. [INSTALLATION_GUIDE.md](./INSTALLATION_GUIDE.md) — upgrade steps
 
 ### Developers
-1. [DESIGN_V3.1.0.md](./DESIGN_V3.1.0.md) - Complete design document
-2. [VERSION_HISTORY.md](./VERSION_HISTORY.md) - Version history
-3. [archive/](./archive/) - Historical documents
+1. [v4/DESIGN_V4.0.0.md](./v4/DESIGN_V4.0.0.md) — current architecture
+2. [v4/design-v4-engine.md](./v4/design-v4-engine.md) — data integrity layer
+3. [EXPORT_AND_ANALYSIS_DESIGN.md](./EXPORT_AND_ANALYSIS_DESIGN.md) — export pipeline
+4. [ADVERSARIAL_AUDIT_v3.9.0.md](./ADVERSARIAL_AUDIT_v3.9.0.md) — the audit behind V4
 
 ---
 
@@ -54,32 +63,33 @@ docs/
 
 | Document | Description | Audience |
 |----------|-------------|----------|
-| [SKILL.md](../.claude/skills/evolution/SKILL.md) | Skill definition | AI |
-| [PROJECT_BACKGROUND.md](./PROJECT_BACKGROUND.md) | Project background | Humans |
-| [INSTALLATION_GUIDE.md](./INSTALLATION_GUIDE.md) | Installation guide | Humans |
-| [DESIGN_V3.1.0.md](./DESIGN_V3.1.0.md) | Design document | Humans |
-| [VERSION_HISTORY.md](./VERSION_HISTORY.md) | Version history | Humans |
+| [.claude/skills/evolution/SKILL.md](../.claude/skills/evolution/SKILL.md) | Execution instructions (the actual skill) | AI |
+| [PROJECT_BACKGROUND.md](./PROJECT_BACKGROUND.md) | Project background | Human |
+| [INSTALLATION_GUIDE.md](./INSTALLATION_GUIDE.md) | Installation guide | Human |
+| [VERSION_HISTORY.md](./VERSION_HISTORY.md) | Version history | Human |
+| [v4/DESIGN_V4.0.0.md](./v4/DESIGN_V4.0.0.md) | Current design | Human |
+| [EXPORT_AND_ANALYSIS_DESIGN.md](./EXPORT_AND_ANALYSIS_DESIGN.md) | Export and analysis design | Human |
+
+> Historical documents (`DESIGN_V3.1.0.md`, `EVOLUTION_RULES_AND_LOGIC_V3.md`) describe V3-era behavior. They are kept for reference; the V4 documents above supersede them.
 
 ---
 
 ## Version Information
 
+See [VERSION_HISTORY.md](./VERSION_HISTORY.md) for the full changelog.
+
 | Version | Date | Major changes |
 |---------|------|---------------|
-| v3.8.0 | 2026-08-01 | Fixed three bugs: enforced script + disabled manual glob, fixed find_jsonl_file to return all files, added validation mechanism |
-| v3.7.0 | 2026-08-01 | Fixed `/evolution-init` command, call `evolution-export.py` to export full history, prevent sampling |
-| v3.6.0 | 2026-08-01 | Split `/evolution init` into standalone command `/evolution-init`, distinguish initialization from incremental sync |
-| v3.5.0 | 2026-07-31 | Refactored based on writing-great-skills rules, SKILL.md reduced from 96 lines to 37 lines |
-| v3.4.0 | 2026-07-31 | Modular refactoring, SKILL.md split, config.yaml unified configuration |
-| v3.3.0 | 2026-07-30 | Fixed JSON serialization crash, incremental unit drift, Windows encoding, token estimation bias, cleanup safety, file handle leaks |
-| v3.2.1 | 2026-07-30 | Updated pagination parameter: 80K → 150K (based on attention research) |
-| v3.2.0-draft | 2026-07-29 | Initial design, based on 200K window assumption |
-| v3.1.0 | 2026-07-29 | Added initialization command, conversation export mechanism |
-| v3.0.0 | 2026-07-28 | Simplified system, removed auto version |
-| v2.1.0 | 2026-07-28 | Write review mechanism |
-| v2.0.0 | 2026-07-28 | Skill system migration |
-| v1.0.0 | 2026-07-21 | Initial release |
+| v4.1.6 | 2026-09-11 | Privacy generalization, version unification, design doc annotations, installation guide completion |
+| v4.1.5 | 2026-09-10 | sha256 regression test rewrite, Python version fix, archive dead-link fix |
+| v4.1.4 | 2026-09-10 | Release rules, sha256 regression test, version unification |
+| v4.1.3 | 2026-09-10 | sha256 refresh fix (incremental false `file-replaced`), README, KB privacy cleanup, LICENSE |
+| v4.1.2 | 2026-09-10 | Adversarial review fixes (cleanup state protection, lock path, read-only status, exit codes) |
+| v4.1.1 | 2026-09-10 | Path anchoring, version labeling, kb-manager archival |
+| v4.1.0 | 2026-09-10 | Kept engine-layer fixes, rolled back knowledge-layer over-engineering |
+| v4.0.0 | 2026-08-24 | MAJOR: dual cursors + batch commit, integrity check, atomic writes |
+| v3.9.0 | 2026-08-01 | Added `/evolution-init` pre-check |
 
 ---
 
-**Welcome to Evolution v3.8.0!**
+**Welcome to Evolution v4.1.6!**

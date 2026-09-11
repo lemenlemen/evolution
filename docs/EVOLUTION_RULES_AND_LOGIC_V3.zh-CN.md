@@ -1,6 +1,11 @@
 # Evolution V3 - 系统规则与运行逻辑
 
-> **版本**：3.8.0（2026-08-01）  
+> ⚠️ **过时文档（v4.1.6 补记）**：本文档描述的是 V3.x 系统规则（单文件结构、无模块化）。
+> V4.0.0 起已改为模块化结构（SKILL.md + config.yaml + commands/ + rules/ + evolution-export.py）。
+> 文件树、命令列表、状态模型均与当前实现不符。
+> 当前系统行为以 `CLAUDE.md` + `.claude/skills/evolution/` + `docsV3/VERSION_HISTORY.md` 为准。
+
+> **版本**：3.9.0（2026-08-01）  
 > **基于**：V2 版本经验 + 简化需求
 
 > **版本历史**：详见 [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)
@@ -60,7 +65,7 @@ Evolution 是一个**人机共生进化系统**，让 AI 和人类在协作中�
 |----------|------|------|
 | `.claude/skills/evolution/SKILL.md` | Skill 定义和执行指令 | AI |
 | `evolution/knowledge-base/` | 知识库数据 | AI + 人类 |
-| `docs/` | 设计文档 | 人类 |
+| `docsV3/` | 设计文档 | 人类 |
 
 ---
 
@@ -74,7 +79,7 @@ Evolution 是一个**人机共生进化系统**，让 AI 和人类在协作中�
 
 **执行方式**：
 1. 主 agent 触发 **sub agent**
-2. Sub agent 在后台分析**全部**历史对话
+2. Sub agent 在后台分析**全部**历史主会话对话（见第 5 节导出范围说明）
 3. 提取所有关键事实
 4. 记录所有踩坑记录
 5. 生成初始知识库
@@ -101,53 +106,58 @@ Evolution 是一个**人机共生进化系统**，让 AI 和人类在协作中�
 
 ## 5. 对话导出机制
 
-### 5.1 方法 A：AI 记忆（默认）
+Evolution 通过 `evolution-export.py` 脚本导出 Claude Code 的对话历史（JSONL 格式）。这是唯一的数据导出方式。
 
-**执行流程**：
+### 5.1 导出脚本
+
+**脚本位置**：`.claude/skills/evolution/evolution-export.py`
+
+**功能**：
+1. 发现 JSONL 文件路径（`~/.claude/projects/<hash>/`）
+2. 解析 JSONL 格式，过滤噪声条目
+3. 提取有意义的对话内容（user/assistant 文本、工具调用、思考等）
+4. 分页为 ~90K token 的 chunk
+5. 输出 chunk 文件到 `.evolution/chunks/`
+6. 管理 `sync-state.json` 增量同步状态
+
+**导出范围与保真度（如实说明）**：
+
+- **覆盖范围**：只导出主会话的顶层 `*.jsonl` 文件；`subagents/` 子目录下的
+  sub agent 转录默认排除——避免 Evolution 自我摄取形成强化循环。因此
+  sub agent 会话中的内容不会进入知识库。
+- **内容截断**：为控制 chunk 体积，导出按设计做了摘要截断，并非原文完整保留：
+  - thinking：超过 400 字符时保留前 200 + 后 100 字符
+  - tool_use：仅保留工具名与关键参数摘要（如 Bash 命令前 500 字符）
+  - tool_result：超过 600 字符时保留前 500 字符（错误信息额外保留尾部 200 字符）
+  - 单个超大 entry 超出 chunk 预算时会整体截断兜底
+- **噪声过滤**：非 user/assistant 类型条目（进度、元数据等）不导出
+
+### 5.2 执行流程
+
 ```
-用户输入 /evolution
+用户输入 /evolution-init（初始化）或 /evolution（增量同步）
     ↓
 主 agent 触发 sub agent
     ↓
-Sub agent 分析当前 session 的对话上下文
+Sub agent 执行 evolution-export.py
     ↓
-提取知识，写入知识库
+脚本输出分页 chunk 文件（~90K token/chunk）
     ↓
-返回摘要
+Sub agent 逐 chunk 读取分析，提取知识
+    ↓
+写入知识库（evolution/knowledge-base/）
+    ↓
+更新 sync-state.json
 ```
 
-**优点**：
-- ✅ 简单，无需额外文件
-- ✅ 实时性高
+### 5.3 优势与局限
+
+- ✅ 主会话对话全量分块导出，不做随机采样
+- ✅ 分页处理，避免上下文溢出
+- ✅ 增量同步，只处理新增内容
 - ✅ 主 session 几乎不被污染
-
-**缺点**：
-- ❌ 只能分析当前 session 的对话
-
-### 5.2 方法 B：文件记录（可选）
-
-**执行流程**：
-```
-用户输入 /evolution --history
-    ↓
-主 agent 触发 sub agent
-    ↓
-Sub agent 读取临时文件：
-  .claude/.tmp/conversation-*.md
-    ↓
-分析全部对话历史
-    ↓
-提取知识，写入知识库
-    ↓
-返回摘要
-```
-
-**优点**：
-- ✅ 持久化，可追溯历史
-- ✅ 支持跨 session 分析
-
-**缺点**：
-- ❌ 需要额外文件
+- ⚠️ **并非逐字完整导出**：内容按上述策略摘要截断，subagent 转录默认排除，
+  噪声条目被过滤——知识库覆盖的是主会话中有意义的对话信息，不是原始记录的全量镜像
 
 ---
 
@@ -280,6 +290,15 @@ Sub agent 读取临时文件：
 
 | 版本 | 日期 | 主要变更 |
 |------|------|----------|
+| v3.9.0 | 2026-08-01 | 添加 `/evolution-init` 前置检查，防止误触重置 |
+| v3.8.0 | 2026-08-01 | 修复三个 bug：强制脚本 + 禁止手动 glob、修复 find_jsonl_file 返回所有文件、增加验证机制 |
+| v3.7.0 | 2026-08-01 | 修复 `/evolution-init` 命令，调用 `evolution-export.py` 导出全部历史，防止采样 |
+| v3.6.0 | 2026-08-01 | 修复 `/evolution init` 为独立命令 `/evolution-init`，区分初始化和增量同步 |
+| v3.5.0 | 2026-07-31 | 基于 writing-great-skills 规则重构，SKILL.md 从 96 行缩减至 37 行 |
+| v3.4.0 | 2026-07-31 | 模块化重构，SKILL.md 拆分，config.yaml 统一配置 |
+| v3.3.0 | 2026-07-30 | 修复 JSON 序列化崩溃、增量单位漂移、Windows 编码、token 估算偏低 |
+| v3.2.1 | 2026-07-30 | 更新分页参数：80K → 150K（基于注意力研究） |
+| v3.2.0-draft | 2026-07-29 | 初始设计，基于 200K 窗口假设（已被 v3.2.1 取代） |
 | v3.1.0 | 2026-07-29 | 添加初始化命令、对话导出机制 |
 | v3.0.0 | 2026-07-28 | 简化系统，删除 auto 版本 |
 | v2.1.0 | 2026-07-28 | 写入审核机制 |

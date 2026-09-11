@@ -1,34 +1,35 @@
-# Evolution 设计文档 v3.1.0
+# Evolution 设计文档 v3.9.0
 
-> **版本**：3.1.0
-> **日期**：2026-07-29
+> **版本**：3.9.0
+> **日期**：2026-08-01
 > **状态**：设计完成
 
 ---
 
-##  核心设计原则
+## 核心设计原则
 
 > **Evolution 运行时派 sub agents 处理，尽量减少对主会话的污染**
 
 ---
 
-##  架构设计
+## 架构设计
 
 ### 文档职责
 
 | 文件 | 用途 | 读者 |
 |------|------|------|
-| `.claude/skills/evolution/SKILL.md` | Skill 定义 | AI |
-| `docs/` | 设计文档 | 人类 |
+| `CLAUDE.md` | 项目配置 | AI |
+| `.claude/skills/evolution/SKILL.md` | 执行指令 | AI |
+| `docsV3/` | 设计文档 | 人类 |
 
 ---
 
-##  执行命令设计
+## 执行命令设计
 
 ### 初始化命令
 
 ```bash
-/evolution init
+/evolution-init
 ```
 
 **设计考虑**：
@@ -39,7 +40,7 @@
 
 **执行流程**：
 ```
-用户输入 /evolution init
+用户输入 /evolution-init
     ↓
 主 agent 触发 sub agent
     ↓
@@ -57,42 +58,32 @@ Sub agent 在后台：
 
 ---
 
-##  对话导出机制设计
+## 对话导出机制设计
 
-### 方法 A：AI 记忆（默认）
+### 导出方式：evolution-export.py
 
 **设计考虑**：
-- 简单直接
-- 无需额外文件
+- 通过脚本导出全部历史对话，防止采样
+- 支持全量导出（`--mode full`）与增量导出（`--mode incremental`）
+- 跨进程文件锁保证并发安全
 - 主 session 几乎不被污染
 
 **适用场景**：
-- 短期项目
-- 单次 session 内使用
-- 大多数日常场景
+- 初始化（`/evolution-init`）：全量导出全部历史对话
+- 增量同步（`/evolution`）：仅导出新增对话
 
-### 方法 B：文件记录（可选）
+**执行**：
+```bash
+# 全量导出（初始化）
+python .claude/skills/evolution/evolution-export.py --mode full
 
-**设计考虑**：
-- 持久化保存
-- 可追溯历史
-- 支持跨 session 分析
-
-**适用场景**：
-- 长期项目
-- 需要完整历史追溯
-- 需要跨 session 分析
-
-**实现**：
-```
-.claude/.tmp/conversation-20260729-001.md
-.claude/.tmp/conversation-20260729-002.md
-...
+# 增量导出（同步）
+python .claude/skills/evolution/evolution-export.py --mode incremental
 ```
 
 ---
 
-##  Sub Agent 执行设计
+## Sub Agent 执行设计
 
 ### 为什么用 Sub Agent？
 
@@ -121,7 +112,7 @@ Sub agent 在后台：
 
 ---
 
-##  写入审核机制设计
+## 写入审核机制设计
 
 ### 状态标记
 
@@ -145,7 +136,7 @@ Sub agent 在后台：
 
 ---
 
-##  渐进式读取设计
+## 渐进式读取设计
 
 ### 为什么需要渐进式读取？
 
@@ -166,10 +157,19 @@ Sub agent 在后台：
 
 ---
 
-##  版本历史
+## 版本历史
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
+| v3.9.0 | 2026-08-01 | 添加 `/evolution-init` 前置检查，防止误触重置 |
+| v3.8.0 | 2026-08-01 | 修复三个 bug：强制脚本 + 禁止手动 glob、修复 find_jsonl_file 返回所有文件、增加验证机制 |
+| v3.7.0 | 2026-08-01 | 修复 `/evolution-init` 命令，调用 `evolution-export.py` 导出全部历史，防止采样 |
+| v3.6.0 | 2026-08-01 | 修复 `/evolution init` 为独立命令 `/evolution-init`，区分初始化和增量同步 |
+| v3.5.0 | 2026-07-31 | 基于 writing-great-skills 规则重构，SKILL.md 从 96 行缩减至 37 行 |
+| v3.4.0 | 2026-07-31 | 模块化重构，SKILL.md 拆分，config.yaml 统一配置 |
+| v3.3.0 | 2026-07-30 | 修复 JSON 序列化崩溃、增量单位漂移、Windows 编码、token 估算偏低 |
+| v3.2.1 | 2026-07-30 | 更新分页参数：80K → 150K（基于注意力研究） |
+| v3.2.0-draft | 2026-07-29 | 初始设计，基于 200K 窗口假设（已被 v3.2.1 取代） |
 | v3.1.0 | 2026-07-29 | 添加初始化命令、对话导出机制 |
 | v3.0.0 | 2026-07-28 | 简化系统，删除 auto 版本 |
 | v2.1.0 | 2026-07-28 | 写入审核机制 |
@@ -178,8 +178,7 @@ Sub agent 在后台：
 
 ---
 
-##  参考文档
+## 参考文档
 
-- [SKILL.md](.claude/skills/evolution/SKILL.md) - 执行指令
-- [SKILL.md](../.claude/skills/evolution/SKILL.md) - Skill 定义
-- [README.md](README.md) - 用户文档
+- [SKILL.md](../.claude/skills/evolution/SKILL.md) - 执行指令
+- [CLAUDE.md](../CLAUDE.md) - 项目配置

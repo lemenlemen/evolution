@@ -18,22 +18,24 @@
 ## 项目身份
 
 - [V] **用户身份**：游戏数据分析/运营负责人
-- [V] **核心工作**：多语言手游运营数据分析与后台操作
-- [V] **核心诉求**：将"登录后台 → 导出数据 → Excel 分析 → 写报告"流程自动化
+- [V] **核心工作**：管理多语言手游的运营数据分析和后台操作
+- [V] **核心诉求**：将"手动登录后台 → 导出数据 → Excel 分析 → 写报告"流程自动化
 
 ---
 
 ## Evolution 系统架构
 
-### [D] 存储位置 (kb: KB-001)
-
-- **项目级存储**：`evolution/knowledge-base/`
+### 存储位置
+- **项目级存储**：`evolution-manual/knowledge-base/`
 - **与 Auto Memory 独立**：不使用 `~/.claude/projects/<project>/memory/`
 
-### [D] 文件结构 (kb: KB-002)
-
+### 文件结构
 ```
-evolution/
+evolution-manual/
+├── agents/
+│   ├── knowledge-base-agent.md
+│   ├── growth-agent.md
+│   └── alignment-agent.md
 └── knowledge-base/
     ├── kb-index.md（索引，200 行限制内）
     ├── facts.md
@@ -45,28 +47,25 @@ evolution/
     └── decisions.md
 ```
 
-### [D] 触发机制 (kb: KB-003)
-
-- **手动触发**：`/evolution`、`/evolution-init`
+### 触发机制
+- **手动触发**：`/evolution`、`/kb-sync`、`/growth-sync`、`/alignment-sync`
+- **自动触发**：每 5 轮（KB/Alignment）、每 10 轮（Growth）- 待实现
 
 ---
 
 ## 技术决策
 
-### [D] 命名规范 (kb: KB-004)
-
+### 命名规范
 - **Knowledge Base**（不是 Memory）：避免与 Claude Code Auto Memory 冲突
 - **作者名**：`lemen`（保留）
 - **许可证**：MIT
 
-### [D] 架构设计 (kb: KB-005)
-
+### 架构设计
 - **索引 + 详情文件**：kb-index.md 作为索引（<200 行），详情文件按需读取
 - **增量写入 + 去重**：相同信息更新时间戳，新信息追加
-- **单一知识库树**：只使用 `evolution/`，V2 的 evolution-manual / evolution-auto 目录已废弃（[X]）
+- **双系统设计**：evolution-manual（手动）+ evolution-auto（自动）
 
-### [D] GitHub 发布 (kb: KB-006)
-
+### GitHub 发布
 - **仓库地址**：https://github.com/lemenlemen/evolution
 - **版本**：v1.0.0
 - **文件数**：12 个
@@ -84,6 +83,6 @@ evolution/
 
 ## 元信息
 
-- **最后更新**：2026-09-10
+- **最后更新**：2026-07-24
 - **Knowledge Base Agent 触发次数**：1
-- **总条目数**：9（3 [V] + 6 [D]）
+- **总条目数**：8

@@ -2,7 +2,7 @@
 
 🌐 **Language / 语言**: [English](INSTALLATION_GUIDE.md) | [中文](INSTALLATION_GUIDE.zh-CN.md)
 
-> **Version**: 3.8.0 (2026-08-01)
+> **Version**: 4.1.6 (2026-09-11)  
 > **Supported platforms**: Windows / macOS / Linux
 
 > **Version history**: See [`VERSION_HISTORY.md`](./VERSION_HISTORY.md)
@@ -14,8 +14,9 @@
 ### 1.1 System Requirements
 
 | Item | Requirement |
-|------|-------------|
+|------|------|
 | **Claude Code** | Latest version (Skill system support) |
+| **Python** | 3.9+ (used by `evolution-export.py` to export conversation history) |
 | **Operating system** | Windows 10+ / macOS 10.15+ / Ubuntu 18.04+ |
 | **Shell** | Git Bash / Zsh / Bash |
 
@@ -29,6 +30,19 @@ claude --version
 ```
 claude version 2.1.x or higher
 ```
+
+### 1.3 Verify Python Environment
+
+```bash
+python --version
+```
+
+**Expected output**:
+```
+Python 3.9.x or higher
+```
+
+> Evolution uses the `evolution-export.py` script to export conversation history, so Python is a required dependency.
 
 ---
 
@@ -44,15 +58,67 @@ cd <your-project>
 mkdir -p .claude/skills/evolution
 ```
 
-### 2.2 Create SKILL.md
+### 2.2 Create Skill Files (Modular Structure)
 
-Create a `SKILL.md` file under `.claude/skills/evolution/`, refer to:
-[SKILL.md](https://github.com/lemenlemen/evolution/blob/main/.claude/skills/evolution/SKILL.md)
+Evolution v3.4.0+ is modular and requires the following complete structure:
 
-Or copy from GitHub:
-```bash
-curl -o .claude/skills/evolution/SKILL.md https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/skills/evolution/SKILL.md
 ```
+.claude/skills/evolution/
+├── SKILL.md              # Entry file (command and rule index)
+├── config.yaml           # Unified configuration (pagination, token estimation, status markers)
+├── evolution-export.py   # Conversation export script (Python)
+├── commands/
+│   ├── init.md           # /evolution-init initialization command
+│   └── sync.md           # /evolution incremental sync command
+├── rules/
+│   ├── write.md          # Write rules
+│   ├── read.md           # Read rules
+│   └── dedup.md          # Deduplication rules
+└── tests/
+    └── test_sha256_invariant.py  # sha256 invariant regression test (optional)
+```
+
+The project root also needs a command registration file (for `/evolution-init` slash command discovery):
+
+```
+.claude/
+├── commands/
+│   └── evolution-init.md  # /evolution-init command registration (references skills/evolution/commands/init.md)
+└── skills/
+    └── evolution/         # See the directory tree above
+```
+
+Copy all files from GitHub:
+
+```bash
+# Create subdirectories
+mkdir -p .claude/skills/evolution/commands
+mkdir -p .claude/skills/evolution/rules
+
+# Download the entry file and configuration
+curl -o .claude/skills/evolution/SKILL.md https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/skills/evolution/SKILL.md
+curl -o .claude/skills/evolution/config.yaml https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/skills/evolution/config.yaml
+curl -o .claude/skills/evolution/evolution-export.py https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/skills/evolution/evolution-export.py
+
+# Download command files
+curl -o .claude/skills/evolution/commands/init.md https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/skills/evolution/commands/init.md
+curl -o .claude/skills/evolution/commands/sync.md https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/skills/evolution/commands/sync.md
+
+# Download rule files
+curl -o .claude/skills/evolution/rules/write.md https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/skills/evolution/rules/write.md
+curl -o .claude/skills/evolution/rules/read.md https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/skills/evolution/rules/read.md
+curl -o .claude/skills/evolution/rules/dedup.md https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/skills/evolution/rules/dedup.md
+
+# Download the command registration file (for /evolution-init slash command discovery)
+mkdir -p .claude/commands
+curl -o .claude/commands/evolution-init.md https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/commands/evolution-init.md
+
+# Download the test file (optional)
+mkdir -p .claude/skills/evolution/tests
+curl -o .claude/skills/evolution/tests/test_sha256_invariant.py https://raw.githubusercontent.com/lemenlemen/evolution/main/.claude/skills/evolution/tests/test_sha256_invariant.py
+```
+
+> Alternatively, clone the repository and copy the entire `.claude/skills/evolution/` directory.
 
 ### 2.3 Create Knowledge Base Directory
 
@@ -83,13 +149,27 @@ Template file reference: [knowledge-base](https://github.com/lemenlemen/evolutio
 ### 3.1 Check Directory Structure
 
 ```bash
-# Check Skill files
-ls -la .claude/skills/evolution/
+# View Skill files (modular structure)
+ls -R .claude/skills/evolution/
 
 # Should show:
 # SKILL.md
+# config.yaml
+# evolution-export.py
+# commands/init.md
+# commands/sync.md
+# rules/write.md
+# rules/read.md
+# rules/dedup.md
+# tests/test_sha256_invariant.py   # Optional (regression test)
 
-# Check knowledge base files
+# View the command registration file
+ls .claude/commands/
+
+# Should show:
+# evolution-init.md
+
+# View knowledge base files
 ls -la evolution/knowledge-base/
 
 # Should show 8 files:
@@ -117,19 +197,22 @@ Project
 ── evolution: < 50 tokens    ← Should be displayed
 ```
 
-### 3.3 Test Manual Trigger
+### 3.3 Test the Initialization Command
 
 ```
-Enter: /evolution
+Enter: /evolution-init
 ```
+
+> `/evolution` is the incremental sync command; after the first installation you should use `/evolution-init` to initialize the knowledge base.
 
 **Expected behavior**:
 ```
-AI: Let me read kb-index.md to understand the knowledge base overview...
-    [Reading kb-index.md]
-AI: Based on the index, I need to read...
-    [Only reading relevant files]
-AI: Done!
+AI: Let me first trigger a sub agent to export all historical main session conversations...
+    [Running evolution-export.py --mode full]
+AI: Export complete, starting chunk-by-chunk extraction of key facts...
+    [Analyzing conversation history]
+AI: Initialization complete!
+    Sessions analyzed: N, facts extracted: N, pitfalls: N
 ```
 
 ---
@@ -145,10 +228,17 @@ AI: Done!
 **Solution**:
 ```bash
 # Check directory structure
-ls -la .claude/skills/evolution/
+ls -R .claude/skills/evolution/
 
-# Should show:
-# SKILL.md
+# Should show the complete modular structure:
+# SKILL.md, config.yaml, evolution-export.py
+# commands/init.md, commands/sync.md
+# rules/write.md, rules/read.md, rules/dedup.md
+# tests/test_sha256_invariant.py   # Optional (regression test)
+
+# Check the command registration file
+ls .claude/commands/
+# Should show: evolution-init.md
 
 # Check frontmatter format
 head -10 .claude/skills/evolution/SKILL.md
@@ -163,21 +253,11 @@ head -10 .claude/skills/evolution/SKILL.md
 ### Problem 2: AI Reads All Files at Once
 
 **Possible causes**:
-- No explicit progressive reading instructions in SKILL.md
+- No explicit progressive disclosure instructions in SKILL.md
 
 **Solution**:
-- Check if SKILL.md has a "progressive reading rules" section
+- Check whether SKILL.md has a "progressive reading rules" section
 - Confirm the instructions explicitly say "do not read all files at once"
-
-### Problem 3: Auto-Trigger Not Working
-
-**Possible causes**:
-- `disable-model-invocation: true` (should be `false`)
-- `description` trigger keywords are unclear
-
-**Solution**:
-- Check that frontmatter has `disable-model-invocation: false`
-- Improve the `description` field trigger keywords
 
 ---
 
@@ -185,56 +265,101 @@ head -10 .claude/skills/evolution/SKILL.md
 
 ### 5.1 Upgrading from V2 to V3
 
+> V3 changes the knowledge base directory from `evolution-manual/` to `evolution/`.
+> Migration uses a **whole-directory rename** (consistent with the migration guide for v3.0.0 in [VERSION_HISTORY.md](./VERSION_HISTORY.md)),
+> so all original content is preserved along with the directory and no separate backup is needed; before starting, confirm that the target directory does not exist.
+
 **Steps**:
 
-1. **Backup V2 files**
+1. **Pre-check**
    ```bash
-   # Backup the old knowledge base
-   cp -r evolution-manual/knowledge-base evolution-manual/knowledge-base.v2.backup
+   # You should see evolution-manual/ and evolution/ should not exist
+   ls -d evolution-manual evolution 2>/dev/null
+
+   # If evolution/ already exists (e.g. a partial migration happened before), back up the old tree to the project root first, then continue:
+   # cp -r evolution-manual/knowledge-base ./knowledge-base.v2.backup.$(date +%Y%m%d)
    ```
 
-2. **Migrate knowledge base**
+2. **Whole-directory rename migration**
    ```bash
-   # Move files from old directory to new directory
-   mv evolution-manual/knowledge-base/*.md evolution/knowledge-base/
+   # Whole-directory rename: knowledge base files move with the directory, preserving the original content naturally
+   mv evolution-manual evolution
    ```
 
-3. **Delete old directory**
-   ```bash
-   # Remove the empty old directory
-   rmdir evolution-manual/knowledge-base/
-   rmdir evolution-manual/
-   ```
+   After migration the knowledge base is located at `evolution/knowledge-base/`, matching the V3 path.
+   The legacy `evolution/agents/` subdirectory is a V2 artifact; you may keep it for reference or delete it manually.
+
+3. **Fix old paths inside the knowledge base (optional but recommended)**
+
+   The V2-era `kb-index.md` / `facts.md` may still self-reference the old `evolution-manual/` path;
+   manually replace any occurrences of `evolution-manual/` with `evolution/`.
 
 4. **Verify**
    ```bash
-   # Verify according to Section 3
+   # Knowledge base files should now be in the new location
+   ls evolution/knowledge-base/
+
+   # Verify the installation according to Section 3
    ```
 
 ---
 
 ## 6. Uninstall Guide
 
+> **All commands below must be run from the project root directory (the directory containing `.claude/` and `evolution/`).**
+> Run `pwd` first to confirm your location, to avoid accidentally deleting other directories.
+
+### 6.0 Back Up Before Uninstalling (Strongly Recommended)
+
+The knowledge base is not under version control by default, and cannot be recovered once deleted. Back it up first:
+
+```bash
+# Confirm you are in the project root directory
+pwd
+
+# Back up the knowledge base to a location outside the project root
+cp -r evolution/knowledge-base ~/evolution-kb-backup-$(date +%Y%m%d)
+
+# Confirm the backup succeeded before continuing
+ls ~/evolution-kb-backup-*
+```
+
 ### 6.1 Full Uninstall
 
 ```bash
-# Remove Skill
-rm -rf .claude/skills/evolution
+# 1) Preview what will be deleted first (without actually deleting)
+find .claude/skills/evolution evolution/knowledge-base -type f
 
-# Remove knowledge base
-rm -rf evolution
+# 2) Remove the Skill
+rm -r .claude/skills/evolution
+
+# 3) Remove the knowledge base (precise path, only knowledge-base, leaving project source untouched)
+rm -r evolution/knowledge-base
+
+# 4) If evolution/ is now empty, remove the empty directory; otherwise keep it
+rmdir evolution 2>/dev/null || echo "evolution/ is not empty, kept"
+
+# 5) Clean up the export cache and sync state (optional, includes all chunk files)
+rm -r .evolution
 ```
 
-### 6.2 Keep Knowledge Base
+> ⚠️ **Do not run `rm -rf evolution`**:
+> - The project root directory of this repository itself may be named `evolution`, so running it at the wrong directory level would delete the entire project;
+> - Even when run at the project root, it would delete non-knowledge-base content under `evolution/` as well.
+> Always use the precise path `evolution/knowledge-base` shown above.
+>
+> When using `rm -r` (without `-f`), you will be prompted to confirm for write-protected files; this is expected protective behavior.
 
-If you only want to uninstall the Skill but keep the knowledge base:
+### 6.2 Keep the Knowledge Base
+
+If you only want to uninstall the Skill while keeping the knowledge base:
 
 ```bash
-# Only remove Skill
-rm -rf .claude/skills/evolution
+# Only remove the Skill
+rm -r .claude/skills/evolution
 
-# Keep knowledge base
-# evolution/ directory remains unchanged
+# Keep the knowledge base
+# The evolution/knowledge-base/ directory remains unchanged
 ```
 
 ---
@@ -253,7 +378,7 @@ du -sh evolution/knowledge-base/
 ### 7.2 Version Control
 
 ```bash
-# Include knowledge base in version control
+# Include the knowledge base in version control
 git add evolution/knowledge-base/
 git commit -m "chore: update knowledge base"
 ```
@@ -286,4 +411,4 @@ git commit -m "feat: add evolution skill"
 
 ---
 
-**Installation complete! Start using Evolution v3.8.0.**
+**Installation complete! Start using Evolution v4.1.6.**

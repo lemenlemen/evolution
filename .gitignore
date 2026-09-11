@@ -1,5 +1,17 @@
 # Project-local configuration, not for GitHub
 CLAUDE.md
+
 # Python cache
 __pycache__/
 *.pyc
+.pytest_cache/
+
+# Evolution 临时文件和状态
+.evolution/
+*.kb.bak
+*.kb.tmp-*
+sync-state.json.tmp
+sync-state.json.corrupt-*
+
+# 知识库归档（大文件，按需提交）
+evolution/knowledge-base/archive/
