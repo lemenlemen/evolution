@@ -1,7 +1,11 @@
 # 导出和分析对话内容 - 设计方案
 
-> **版本**：3.8.0
-> **日期**：2026-07-31
+> ⚠️ **过时文档（v4.1.5 补记）**：本文档描述的是 V3.x 引擎设计（单游标 `processed_lines`、schema 3.4.0、4 个 CLI 模式）。
+> V4.0.0 起已改为双游标（`exported_lines`/`committed_lines`）、schema 3.5.0、7 个 CLI 模式。源码行号引用已全部失效。
+> 当前系统行为以 `CLAUDE.md` + `.claude/skills/evolution/` + `docsV3/VERSION_HISTORY.md` 为准。
+
+> **版本**：3.9.0
+> **日期**：2026-08-01
 > **作者**：lemen
 > **状态**：设计完成，已修复并验证
 
@@ -11,11 +15,8 @@
 
 | 版本 | 日期 | 主要变更 |
 |------|------|----------|
-| 3.8.0 | 2026-08-01 | 修复三个 bug：强制脚本执行并禁用手动 glob、修复 find_jsonl_file 返回所有文件、新增验证机制 |
-| 3.7.0 | 2026-08-01 | 修复 `/evolution-init` 命令，调用 `evolution-export.py` 导出全量历史，防止采样 |
-| 3.6.0 | 2026-08-01 | 将 `/evolution init` 拆分为独立命令 `/evolution-init`，区分初始化与增量同步 |
-| 3.5.0 | 2026-07-31 | 基于 writing-great-skills 规则重构，SKILL.md 从 96 行精简至 37 行 |
-| 3.4.0 | 2026-07-31 | 模块化重构，SKILL.md 拆分，config.yaml 统一配置 |
+| 3.9.0 | 2026-08-01 | 添加 `/evolution-init` 前置检查，防止误触重置 |
+| 3.8.0 | 2026-08-01 | 删除内嵌代码改为引用源码；补充 v3.8.0 验证机制（文件消费一致性校验 + 跨进程文件锁）；修正 `find_jsonl_file`/`compute_project_hash`/`estimate_tokens`/`parse_jsonl`/`ConversationEntry`/`sync-state.json` 等多处与代码不符的描述 |
 | 3.3.0 | 2026-07-31 | 修复 JSON 序列化崩溃、增量单位漂移、Windows 编码、token 估算偏低（CJK 系数 1.5→1.0）、cleanup 安全、文件句柄泄漏等多项问题 |
 | 3.2.1 | 2026-07-30 | 更新分页参数：80K → 150K（基于注意力研究） |
 | 3.2.0-draft | 2026-07-29 | 初始设计，基于 200K 窗口假设 |
@@ -32,7 +33,15 @@
 | **目标 chunk 大小** | 150K | **90K** | 90K × 1.68 ≈ 150K 实际，在 200K 硬上限内 |
 | **硬上限** | 200K | **200K** | 保持不变 |
 | **最小值** | 40K | **40K** | 保持不变 |
-| **预计 chunk 数** | 2-3 个 | **5-6 个** | 371K / 90K ≈ 4.1，实际 5-6 个 |
+| **预计 chunk 数** | 2-3 个 | **5-6 个** | 过滤后总量 ~371K（估算口径），按 90K 目标切分并受轮次边界约束，实际 5-6 个 |
+
+**口径说明（统一术语）**：
+
+- **估算 tokens**：`estimate_tokens` 按英文/代码 4 字符/token、CJK 1.0 字符/token 加权计算，
+  是分页器实际使用的度量。目标 chunk 大小 90K、硬上限 200K 均指该估算值。
+- **实际消耗 tokens**：模型真实计费/占用的 token 数，经验上约为估算值的 1.5-1.7 倍
+  （CJK 密集内容实测 90K 估算 ≈ 140-150K 实际）。规划 sub agent 窗口时以实际值为准。
+- 文中所有"90K / 371K"均为估算口径；"140-150K"为实际口径，两者不再混用。
 
 **修正原因：**
 
@@ -40,7 +49,6 @@ v3.2.1 的 150K **估算** → 实际 ~250K（**超过 200K 硬上限**）
 v3.3.0 的 90K **估算** → 实际 ~150K（**在 200K 硬上限内**）
 
 **实际测试验证（15MB JSONL）：**
-- ✅ 产生 6 个 chunk
 - ✅ 每个 chunk 约 85-90K（估算）
 - ✅ 实际约 140-150K（在 200K 硬上限内）
 - ✅ 无 chunk 超过 200K
@@ -68,7 +76,7 @@ v3.3.0 的 90K **估算** → 实际 ~150K（**在 200K 硬上限内**）
    - **合成/分析任务的有效上下文：约最大窗口的 20-30%**
    - 对于 1M 窗口：合成有效约 200-300K
 
-## 90K 的计算（v3.3.0，v3.8.0 仍沿用）
+## 90K 的计算（v3.3.0）
 
 有效上下文 200-300K（合成任务） - 其他分配 98K（8K 指令 + 10K 读 + 10K 写 + 20K 输出 + 50K 开销） = chunk 内容上限 102-202K，取 ~90K 作为目标（v3.3.0 考虑 CJK 系数修正后）。
 
@@ -90,8 +98,6 @@ v3.3.0 的 90K **估算** → 实际 ~150K（**在 200K 硬上限内**）
 
 ## 0. 前置数据分析
 
-> **说明**：以下统计数据为代表性示例数据，用于说明设计方案的分析依据，具体数值已做取整处理。
-
 在设计方案前，对实际 JSONL 文件进行了全面分析，以下为关键发现：
 
 ### 0.1 文件概况
@@ -99,52 +105,52 @@ v3.3.0 的 90K **估算** → 实际 ~150K（**在 200K 硬上限内**）
 | 指标 | 数值 |
 |------|------|
 | 文件路径 | `~/.claude/projects/<project-hash>/<session-uuid>.jsonl` |
-| 文件大小 | ~10 MB |
-| 总行数 | ~5,000 行 |
-| 时间跨度 | 约 1 个月的数据 |
+| 文件大小 | 14 MB |
+| 总行数 | 5,232 行 |
+| 时间跨度 | 2026-06-29 ~ 2026-07-30（约 31 天） |
 
 ### 0.2 条目类型分布
 
 | 类型 | 数量 | 说明 |
 |------|------|------|
-| assistant | ~2,000 | AI 回复（含 text/thinking/tool_use 块） |
-| user | ~1,100 | 用户消息（含 text/tool_result/image 块） |
-| file-history-snapshot | ~330 | 文件历史快照（元数据，可忽略） |
-| system | ~300 | 系统消息 |
-| last-prompt | ~300 | 最近提示（元数据，可忽略） |
-| mode / permission-mode / ai-title | 各 ~290 | 模式/权限/标题（元数据，可忽略） |
-| attachment | ~250 | 附件 |
-| queue-operation | ~80 | 队列操作（元数据，可忽略） |
-| file-history-delta | ~10 | 文件增量（元数据，可忽略） |
+| assistant | 2,015 | AI 回复（含 text/thinking/tool_use 块） |
+| user | 1,078 | 用户消息（含 text/tool_result/image 块） |
+| file-history-snapshot | 326 | 文件历史快照（元数据，可忽略） |
+| system | 305 | 系统消息 |
+| last-prompt | 300 | 最近提示（元数据，可忽略） |
+| mode / permission-mode / ai-title | 各 291 | 模式/权限/标题（元数据，可忽略） |
+| attachment | 251 | 附件 |
+| queue-operation | 78 | 队列操作（元数据，可忽略） |
+| file-history-delta | 9 | 文件增量（元数据，可忽略） |
 
 ### 0.3 内容块分布
 
-**assistant 内容块（~4,000 个）：**
-- tool_use: ~800（工具调用，如 Bash/Edit/Write/Read）
-- thinking: ~780（思考过程）
-- text: ~450（文本回复）
+**assistant 内容块（4,015 个）：**
+- tool_use: 793（工具调用，如 Bash/Edit/Write/Read）
+- thinking: 776（思考过程）
+- text: 446（文本回复）
 
 **user 内容块：**
-- tool_result: ~800（工具返回结果）
-- string: ~250（用户直接输入文本）
-- text: ~40（文本块）
-- image: ~15（图片）
+- tool_result: 793（工具返回结果）
+- string: 248（用户直接输入文本）
+- text: 37（文本块）
+- image: 15（图片）
 
-**工具调用分布：** Bash(~300) > Edit(~180) > Write(~110) > Read(~110) > Agent(~45) > GitHub MCP(~33) > WebSearch(~12)
+**工具调用分布：** Bash(294) > Edit(178) > Write(112) > Read(107) > Agent(45) > GitHub MCP(33) > WebSearch(12)
 
 ### 0.4 Token 估算（关键约束）
 
 | 内容类别 | 估算 Token 数 | 说明 |
 |----------|---------------|------|
-| tool_use 输入 | ~250K | 工具调用参数（命令、文件内容等） |
-| tool_result 输出 | ~190K | 工具返回结果（命令输出、文件内容等） |
-| user_text | ~110K | 用户直接输入 |
-| assistant_text | ~100K | AI 文本回复 |
+| tool_use 输入 | ~251K | 工具调用参数（命令、文件内容等） |
+| tool_result 输出 | ~191K | 工具返回结果（命令输出、文件内容等） |
+| user_text | ~114K | 用户直接输入 |
+| assistant_text | ~101K | AI 文本回复 |
 | thinking | ~60K | AI 思考过程 |
-| **总计** | **~720K** | 占 1M 原始窗口约 72%，远超合成有效上下文（200-300K） |
-| 过滤后（去 thinking + tool_result） | ~470K | 仍超合成有效上下文（200-300K） |
+| **总计** | **~716K** | 占 1M 原始窗口约 72%，远超合成有效上下文（200-300K） |
+| 过滤后（去 thinking + tool_result） | ~465K | 仍超合成有效上下文（200-300K） |
 
-**核心矛盾：~720K tokens 需要被分析，但 sub agent 上下文窗口为 1M tokens，但合成/分析任务的有效上下文约 200-300K，仍需分页处理。**
+**核心矛盾：716K tokens 需要被分析，但 sub agent 上下文窗口为 1M tokens，但合成/分析任务的有效上下文约 200-300K，仍需分页处理。**
 
 ---
 
@@ -155,7 +161,7 @@ v3.3.0 的 90K **估算** → 实际 ~150K（**在 200K 硬上限内**）
 ```
 ┌─────────────────────────────────────────────────────┐
 │                    主 Agent（用户交互层）              │
-│  接收 /evolution-init 或 /evolution        │
+│  接收 /evolution-init 或 /evolution               │
 │  派发 sub agent，显示最终摘要                         │
 └──────────────────────┬──────────────────────────────┘
                        │ 触发
@@ -190,8 +196,8 @@ v3.3.0 的 90K **估算** → 实际 ~150K（**在 200K 硬上限内**）
 │ sync-state   │
 │ .json        │
 │ chunks/      │
-│   chunk-0.md │
-│   chunk-1.md │
+│   chunk-00.md │
+│   chunk-01.md │
 │   ...        │
 └──────────────┘
 ```
@@ -199,18 +205,17 @@ v3.3.0 的 90K **估算** → 实际 ~150K（**在 200K 硬上限内**）
 ### 1.2 数据流
 
 ```
-JSONL 原始文件（~10MB / 5000行）
+JSONL 原始文件（14MB / 5232行）
         │
         ▼ evolution-export.py --mode full
         │
     解析 + 过滤 + 分页
         │
-        ├─→ chunk-0.md（~90K tokens）
-        ├─→ chunk-1.md（~90K tokens）
-        ├─→ chunk-2.md（~90K tokens）
-        ├─→ chunk-3.md（~90K tokens）
-        ├─→ chunk-4.md（~90K tokens）
-        └─→ chunk-5.md（~31K tokens）
+        ├─→ chunk-00.md（~90K tokens 估算）
+        ├─→ chunk-01.md（~90K tokens 估算）
+        ├─→ chunk-02.md（~90K tokens 估算）
+        ├─→ chunk-03.md（~90K tokens 估算）
+        └─→ chunk-04.md（~11K tokens 估算）
               │
               ▼ Sub Agent 逐页读取分析
               │
@@ -291,7 +296,9 @@ tool_result:     191K tokens →  38K（20%保留）
 过滤后总计:                       ~371K tokens
 ```
 
-371K tokens / 90K tokens per chunk ≈ **4-5 个 chunk**
+371K tokens（估算口径）按 90K 目标切分 ≈ **4.1 个 chunk 的数学下界；实际产生 5-6 个**——
+因为分页必须保持对话轮次完整（不在轮次中间切断），且不足 40K 最小值的尾部轮次会合并到上一页，
+轮次边界约束使 chunk 数高于纯除法结果。
 
 ### 2.3 分页策略
 
@@ -301,7 +308,7 @@ tool_result:     191K tokens →  38K（20%保留）
 
 1. **按时间顺序分页**：保持对话的时间连续性
 2. **按对话轮次边界切分**：不在 user-assistant 对的中间切断
-3. **目标大小：90K tokens**（约 270KB 文本，按 3 chars/token）
+3. **目标大小：90K tokens**（估算口径；实际消耗约 140-150K tokens）
 4. **硬上限：200K tokens**（不超过此值）
 5. **最小值：40K tokens**（不足则合并到上一页）
 
@@ -341,7 +348,7 @@ tool_result:     191K tokens →  38K（20%保留）
 | 状态变更 | 项目阶段、里程碑、完成状态 | "V3 设计完成" |
 | 学习要点 | 用户可学习的技术知识点 | "Commits vs Releases 的区别" |
 | Prompt 改进 | 用户提问方式的优化建议 | "更具体地描述期望的输出格式" |
-| 对齐项 | 需要用户确认的事项 | "项目名称使用 my-project" |
+| 对齐项 | 需要用户确认的事项 | "作者名使用 lemen" |
 | 决策记录 | 技术决策 + 理由 | "选择 Skill 系统而非 Slash Command" |
 
 ### 2.5 存储策略
@@ -352,12 +359,12 @@ tool_result:     191K tokens →  38K（20%保留）
 <project>/
 ├── .evolution/                    # Evolution 状态目录
 │   ├── sync-state.json            # 同步状态（游标）
-│   ├── chunks/                    # 临时分页文件
-│   │   ├── chunk-0.md
-│   │   ├── chunk-1.md
-│   │   ├── ...
-│   │   └── chunk-N.md
-│   └── export-log.json            # 导出日志
+│   ├── export.lock                # 跨进程文件锁（v3.8.0）
+│   └── chunks/                    # 临时分页文件
+│       ├── chunk-00.md
+│       ├── chunk-01.md
+│       ├── ...
+│       └── chunk-N.md
 │
 └── evolution/
     └── knowledge-base/            # 知识库（最终结果）
@@ -385,47 +392,33 @@ tool_result:     191K tokens →  38K（20%保留）
 
 ```json
 {
-  "version": "3.8.0",
-  "last_sync": {
-    "timestamp": "<timestamp>",
-    "line_number": 5000,
-    "uuid": "最后一个条目的uuid",
-    "session_id": "<session-uuid>"
-  },
-  "file_info": {
-    "path": "~/.claude/projects/<project-hash>/<session-uuid>.jsonl",
-    "size_at_last_sync": 10000000,
-    "lines_at_last_sync": 5000
-  },
-  "export_history": [
-    {
-      "type": "full",
-      "timestamp": "<timestamp>",
-      "chunks_analyzed": 3,
-      "entries_processed": 5000,
-      "knowledge_items_extracted": 23
-    },
-    {
-      "type": "incremental",
-      "timestamp": "<timestamp>",
-      "entries_processed": 150,
-      "knowledge_items_extracted": 3
+  "version": "3.4.0",
+  "last_full_sync": "2026-07-30T11:38:00",
+  "last_incremental_sync": "2026-07-30T15:00:00",
+  "project_hash": "<project-hash>",
+  "files": {
+    "~/.claude/projects/<project-hash>/xxx.jsonl": {
+      "path": "~/.claude/projects/<project-hash>/xxx.jsonl",
+      "sha256": "abc123...",
+      "mtime": 1753867200.0,
+      "total_lines": 5232,
+      "processed_lines": 5232,
+      "processed_bytes": 14227502,
+      "last_event_timestamp": "2026-07-30T03:39:21.771Z"
     }
-  ]
+  }
 }
 ```
+
+> 完整结构定义见 `evolution-export.py` 第 648-679 行（`file_info_to_dict` / `state_to_dict` / `_empty_state`），字段语义见 4.6。
 
 **增量识别算法：**
 
 ```
-1. 读取 sync-state.json 获取 last_line_number
-2. 读取 JSONL 文件当前总行数
-3. 如果 当前行数 > last_line_number：
-     - 有新内容，执行增量导出
-     - 从 last_line_number + 1 开始读取
-   否则：
-     - 无新内容，跳过
-4. 处理完成后更新 last_line_number
+1. 读取 sync-state.json，获取每个文件的 processed_lines（物理行号）
+2. 解析该文件从 processed_lines + 1 起的后续行
+3. 若有新条目 -> 执行增量导出；否则跳过该文件
+4. 处理完成后将 processed_lines 更新为最后一条 entry 的真实行号
 ```
 
 **边界情况处理：**
@@ -450,10 +443,10 @@ tool_result:     191K tokens →  38K（20%保留）
 Sub Agent 执行：
   1. python evolution-export.py --mode incremental
      → 读取 sync-state.json
-     → 从 last_line_number + 1 开始解析
+     → 从 processed_lines + 1 开始解析
      → 过滤 + 分页（通常只有 1 个 chunk）
-     → 输出 chunk-inc-0.md
-  2. 读取 chunk-inc-0.md
+     → 输出 chunk-inc-00.md
+  2. 读取 chunk-inc-00.md
   3. 分析内容，提取知识
   4. 与现有知识库去重合并
   5. 写入知识库
@@ -497,17 +490,19 @@ Sub Agent 执行：
 
 ```bash
 # 全量导出
-python evolution-export.py --mode full --project-path <project-root>
+python evolution-export.py --mode full --project-path <project-root> --output .evolution/chunks
 
 # 增量导出
-python evolution-export.py --mode incremental --project-path <project-root>
+python evolution-export.py --mode incremental --project-path <project-root> --output .evolution/chunks
 
 # 查看状态
-python evolution-export.py --mode status --project-path <project-root>
+python evolution-export.py --mode status --project-path <project-root> --output .evolution/chunks
 
 # 清理临时文件
-python evolution-export.py --mode cleanup --project-path <project-root>
+python evolution-export.py --mode cleanup --project-path <project-root> --output .evolution/chunks
 ```
+
+> 命令行参数：`--mode`（full/incremental/status/cleanup，必填）、`--project-path`（默认 `.`）、`--output`（输出目录，默认 `.evolution/chunks`）。源码：`evolution-export.py` 第 1068-1118 行（`main`）。
 
 **输出格式：** JSON 到 stdout，供 Sub Agent 解析
 
@@ -515,590 +510,277 @@ python evolution-export.py --mode cleanup --project-path <project-root>
 {
   "status": "success",
   "mode": "full",
-  "total_entries": 5000,
-  "processed_entries": 5000,
-  "filtered_entries": 3083,
+  "total_entries": 5232,
+  "processed_entries": 5232,
+  "discovered_files": ["~/.claude/projects/<project-hash>/xxx.jsonl"],
+  "parsed_files": ["~/.claude/projects/<project-hash>/xxx.jsonl"],
   "chunks": [
-    {"file": ".evolution/chunks/chunk-0.md", "tokens_est": 90000, "turns": 22},
-    {"file": ".evolution/chunks/chunk-1.md", "tokens_est": 90000, "turns": 25},
-    ...
+    {"file": ".evolution/chunks/chunk-00.md", "tokens_est": 90000, "turns": 22},
+    {"file": ".evolution/chunks/chunk-01.md", "tokens_est": 90000, "turns": 25}
   ],
   "sync_state": {
-    "last_line_number": 5000,
-    "last_uuid": "...",
-    "last_timestamp": "<timestamp>"
+    "version": "3.4.0",
+    "last_full_sync": "2026-07-30T11:38:00",
+    "last_incremental_sync": null,
+    "project_hash": "<project-hash>",
+    "files": { "...": { "processed_lines": 5232 } }
   }
 }
 ```
 
+> 字段定义见 `evolution-export.py` 第 894-903 行（`export_full` 返回值）。v3.8.0 起不再输出 `filtered_entries`，改为 `discovered_files`/`parsed_files` 用于一致性校验；`sync_state` 结构见 4.6。
+
 ### 4.2 路径发现机制
 
-**JSONL 文件发现算法：**
+路径发现由两个函数完成：
 
-```python
-def find_jsonl_files(project_path):
-    """
-    发现项目对应的 JSONL 文件
-    
-    策略：
-    1. 从 project_path 推导 project-hash
-       - 将路径中的 / 和 \ 替换为 -
-       - 去掉盘符冒号
-       - 示例：<project-root> → <project-hash>
-    2. 在 ~/.claude/projects/<project-hash>/ 下查找 .jsonl 文件
-    3. 如果找到多个，按修改时间排序，取最新的
-    """
-    import os
-    
-    # 步骤1：推导 project-hash
-    # Claude Code 的路径编码规则：
-    # - 将路径分隔符替换为 -
-    # - 去掉冒号
-    # - 示例：<project-root> → <project-hash>
-    abs_path = os.path.abspath(project_path)
-    
-    # 尝试多种编码方式（Windows 路径变化多）
-    candidates = generate_path_candidates(abs_path)
-    
-    claude_dir = os.path.expanduser("~/.claude/projects")
-    
-    for candidate in candidates:
-        project_dir = os.path.join(claude_dir, candidate)
-        if os.path.isdir(project_dir):
-            jsonl_files = [
-                f for f in os.listdir(project_dir) 
-                if f.endswith('.jsonl')
-            ]
-            if jsonl_files:
-                # 按修改时间排序，取最新的
-                jsonl_files.sort(
-                    key=lambda f: os.path.getmtime(
-                        os.path.join(project_dir, f)
-                    ),
-                    reverse=True
-                )
-                return os.path.join(project_dir, jsonl_files[0])
-    
-    return None
-```
+**`compute_project_hash(project_root) -> str`**
 
-**路径编码候选生成（Windows 兼容）：**
+计算 Claude Code 项目 hash。先将 `:\`（或 `:/`）替换为 `--`（处理 Windows 盘符），再将剩余的 `\` 和 `/` 替换为 `-`。
 
-```python
-def generate_path_candidates(abs_path):
-    """
-    生成可能的 Claude Code project-hash 候选项
-    
-    Claude Code 对路径的编码方式可能因版本而异，
-    需要尝试多种编码方式
-    """
-    candidates = []
-    
-    # 标准化路径
-    path = abs_path.replace('\\', '/')
-    
-    # 方式1：替换 / 为 -，去掉冒号
-    # <project-root> → <project-hash>
-    c1 = path.replace('/', '-').replace(':', '')
-    candidates.append(c1)
-    
-    # 方式2：保留原始大小写
-    c2 = path.replace('/', '-').replace(':', '')
-    candidates.append(c2)
-    
-    # 方式3：小写
-    candidates.append(c1.lower())
-    
-    # 方式4：如果路径有尾部斜杠
-    if not path.endswith('/'):
-        c4 = (path + '/').replace('/', '-').replace(':', '')
-        candidates.append(c4)
-    
-    # 方式5：从 ~/.claude/projects/ 目录实际扫描
-    # 如果以上都不匹配，列出所有目录，用路径关键词匹配
-    claude_dir = os.path.expanduser("~/.claude/projects")
-    if os.path.isdir(claude_dir):
-        path_lower = abs_path.lower().replace('\\', '/').replace(':', '')
-        for dirname in os.listdir(claude_dir):
-            # 将 dirname 还原为路径形式进行比较
-            restored = dirname.replace('-', '/').replace('--', ':/')
-            if restored.lower() in path_lower or path_lower in restored.lower():
-                candidates.append(dirname)
-    
-    return candidates
-```
+示例：`<project-root>` -> `<project-hash>`
+
+> 源码：`evolution-export.py` 第 138-150 行
+
+**`find_jsonl_file(project_root) -> list[Path]`**
+
+发现项目对应的全部**顶层** JSONL 文件，返回列表（按修改时间升序，旧 -> 新）。
+
+策略：
+1. 用 `compute_project_hash` 计算项目 hash
+2. 在 `~/.claude/projects/<hash>/` 下用 `glob("*.jsonl")` 匹配当前目录下的 `.jsonl` 文件（不进入 `subagents` 子目录，无需额外过滤）
+3. 返回所有发现的 JSONL 文件列表；未找到时返回空列表
+
+> 源码：`evolution-export.py` 第 153-179 行
+
+> 注：旧版文档描述的 `generate_path_candidates`（多候选路径生成）在实际代码中已不存在，v3.8.0 改为单一 `compute_project_hash` 编码 + 目录直接匹配。
 
 ### 4.3 格式解析逻辑
 
-**JSONL 解析器：**
+**数据结构：`ConversationEntry`（dataclass）**
 
-```python
-def parse_jsonl(file_path, start_line=0, end_line=None):
-    """
-    解析 JSONL 文件，返回有意义的对话条目
-    
-    参数：
-    - file_path: JSONL 文件路径
-    - start_line: 起始行号（用于增量导出）
-    - end_line: 结束行号（None 表示到文件末尾）
-    
-    返回：生成器，每次 yield 一个 ConversationEntry
-    """
-    import json
-    
-    with open(file_path, 'r', encoding='utf-8') as f:
-        for line_num, line in enumerate(f):
-            if line_num < start_line:
-                continue
-            if end_line is not None and line_num >= end_line:
-                break
-            
-            line = line.strip()
-            if not line:
-                continue
-            
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            
-            # 只处理 user 和 assistant 类型
-            entry_type = entry.get('type')
-            if entry_type not in ('user', 'assistant'):
-                continue
-            
-            yield extract_conversation_content(entry, line_num)
-```
+每条对话条目为一个 dataclass，字段：`session`、`line_no`（1-based 物理行号）、`timestamp`、`role`（`user`/`assistant`）、`content`（`list[ContentBlock]`）。`ContentBlock` 含 `type`（`text`/`thinking`/`tool_use`/`tool_result`）、`text`、`truncated`、`is_error`。
 
-**内容提取器：**
+> 源码：`evolution-export.py` 第 90-109 行（`ContentBlock` + `ConversationEntry`）
 
-```python
-def extract_conversation_content(entry, line_num):
-    """
-    从 JSONL 条目中提取有意义的对话内容
-    
-    过滤策略：
-    - user text: 完整保留
-    - assistant text: 完整保留
-    - thinking: 摘要（前 200 字 + 最后 100 字）
-    - tool_use: 摘要（工具名 + 关键参数）
-    - tool_result: 摘要（前 500 字 + 错误信息）
-    """
-    result = {
-        'line_num': line_num,
-        'type': entry.get('type'),
-        'timestamp': entry.get('timestamp', ''),
-        'uuid': entry.get('uuid', ''),
-        'content_parts': []
-    }
-    
-    msg = entry.get('message', {})
-    content = msg.get('content', '')
-    
-    if isinstance(content, str):
-        # user 直接文本
-        result['content_parts'].append({
-            'type': 'text',
-            'text': content,
-            'truncated': False
-        })
-    elif isinstance(content, list):
-        for block in content:
-            if not isinstance(block, dict):
-                continue
-            
-            block_type = block.get('type')
-            
-            if block_type == 'text':
-                result['content_parts'].append({
-                    'type': 'text',
-                    'text': block.get('text', ''),
-                    'truncated': False
-                })
-            
-            elif block_type == 'thinking':
-                thinking = block.get('thinking', '')
-                # 摘要：前200字 + 最后100字
-                if len(thinking) > 400:
-                    summary = thinking[:200] + '\n[...省略...]\n' + thinking[-100:]
-                else:
-                    summary = thinking
-                result['content_parts'].append({
-                    'type': 'thinking',
-                    'text': summary,
-                    'truncated': len(thinking) > 400
-                })
-            
-            elif block_type == 'tool_use':
-                tool_name = block.get('name', 'unknown')
-                tool_input = block.get('input', {})
-                # 摘要：工具名 + 关键参数
-                input_summary = summarize_tool_input(tool_name, tool_input)
-                result['content_parts'].append({
-                    'type': 'tool_use',
-                    'text': f'[Tool: {tool_name}]\n{input_summary}',
-                    'truncated': True
-                })
-            
-            elif block_type == 'tool_result':
-                result_content = block.get('content', '')
-                if isinstance(result_content, list):
-                    text = '\n'.join(
-                        r.get('text', '') for r in result_content 
-                        if isinstance(r, dict) and r.get('type') == 'text'
-                    )
-                else:
-                    text = str(result_content)
-                # 摘要：前500字 + 错误信息
-                is_error = block.get('is_error', False)
-                if len(text) > 600:
-                    summary = text[:500]
-                    if is_error:
-                        summary += '\n[...错误信息...]\n' + text[-200:]
-                    else:
-                        summary += '\n[...省略...]'
-                else:
-                    summary = text
-                result['content_parts'].append({
-                    'type': 'tool_result',
-                    'text': summary,
-                    'truncated': len(text) > 600,
-                    'is_error': is_error
-                })
-    
-    return result
-```
+**`parse_jsonl(file_path, start_line=0) -> Iterator[ConversationEntry]`**
 
-**工具输入摘要函数：**
+流式解析 JSONL 文件，生成器每次 yield 一个 `ConversationEntry`。
 
-```python
-def summarize_tool_input(tool_name, tool_input):
-    """
-    根据工具类型生成输入摘要
-    
-    不同工具保留不同关键参数：
-    - Bash: command（完整保留，但截断到 500 字）
-    - Edit: file_path + old_string（前 100 字）+ new_string（前 100 字）
-    - Write: file_path + content（前 200 字）
-    - Read: file_path
-    - Agent: prompt（前 300 字）
-    - 其他: JSON 摘要（前 300 字）
-    """
-    if tool_name == 'Bash':
-        cmd = tool_input.get('command', '')
-        if len(cmd) > 500:
-            cmd = cmd[:500] + '...'
-        return f'Command: {cmd}'
-    
-    elif tool_name == 'Edit':
-        fp = tool_input.get('file_path', '')
-        old = tool_input.get('old_string', '')[:100]
-        new = tool_input.get('new_string', '')[:100]
-        return f'File: {fp}\nOld: {old}...\nNew: {new}...'
-    
-    elif tool_name == 'Write':
-        fp = tool_input.get('file_path', '')
-        content = tool_input.get('content', '')[:200]
-        return f'File: {fp}\nContent: {content}...'
-    
-    elif tool_name == 'Read':
-        fp = tool_input.get('file_path', '')
-        return f'File: {fp}'
-    
-    elif tool_name == 'Agent':
-        prompt = tool_input.get('prompt', '')[:300]
-        return f'Prompt: {prompt}'
-    
-    else:
-        import json
-        summary = json.dumps(tool_input, ensure_ascii=False)[:300]
-        return f'Input: {summary}'
-```
+- 签名：`(file_path, start_line=0)`，**无 `end_line` 参数**（旧文档的 `end_line` 已移除）
+- 行号 **1-based**：`enumerate(f, start=1)`，从 `start_line` 之后开始解析
+- 跳过空行、JSON 解析失败行、非 `user`/`assistant` 类型条目
+
+> 源码：`evolution-export.py` 第 201 行（签名）、第 186-217 行（含 `_try_extract_entry` 辅助函数）
+
+**`extract_conversation_content(entry, line_num) -> ConversationEntry`**
+
+从单条 JSONL 条目中提取有意义的对话内容，过滤策略：
+
+| 块类型 | 处理方式 |
+|--------|----------|
+| text | 完整保留 |
+| thinking | 摘要（前 200 字 + 最后 100 字） |
+| tool_use | 摘要（工具名 + 关键参数，经 `summarize_tool_input`） |
+| tool_result | 摘要（前 500 字 + 错误信息后 200 字） |
+
+> 源码：`evolution-export.py` 第 245-306 行
+
+**`summarize_tool_input(tool_name, tool_input) -> str`**
+
+按工具类型生成输入摘要：Bash 保留 `command`（截断 500 字）、Edit 保留 `file_path` + `old_string`/`new_string`（各 100 字）、Write 保留 `file_path` + `content`（200 字）、Read 保留 `file_path`、Agent 保留 `prompt`（300 字），其余 JSON 摘要（300 字）。仅在确实截断时追加 `...`。
+
+> 源码：`evolution-export.py` 第 309-355 行
 
 ### 4.4 分页/截断支持
 
-**分页器：**
+**`paginate_entries(entries, target_tokens=90000, max_tokens=200000, min_tokens=40000) -> list[list[ConversationEntry]]`**
 
-```python
-def paginate_entries(entries, target_tokens=90000, max_tokens=200000):
-    """
-    将对话条目分页为多个 chunk
-    
-    规则：
-    1. 按时间顺序处理
-    2. 保持对话轮次完整性（不在轮次中间切分）
-    3. 目标大小 90K tokens，硬上限 200K tokens
-    4. 最小 chunk 大小 40K tokens（不足则合并到上一页）
-    
-    返回：chunk 列表，每个 chunk 是 entry 列表
-    """
-    chunks = []
-    current_chunk = []
-    current_tokens = 0
-    
-    # 先按轮次分组
-    turns = group_into_turns(entries)
-    
-    for turn in turns:
-        turn_tokens = estimate_turn_tokens(turn)
-        
-        # 如果单个轮次就超过 max_tokens，需要拆分
-        if turn_tokens > max_tokens:
-            # 先保存当前 chunk
-            if current_chunk and current_tokens > 40000:
-                chunks.append(current_chunk)
-                current_chunk = []
-                current_tokens = 0
-            
-            # 拆分大轮次
-            sub_turns = split_large_turn(turn, max_tokens)
-            for sub_turn in sub_turns:
-                chunks.append(sub_turn)
-            continue
-        
-        # 如果加入此轮次会超过 target_tokens
-        if current_tokens + turn_tokens > target_tokens and current_chunk:
-            chunks.append(current_chunk)
-            current_chunk = turn
-            current_tokens = turn_tokens
-        else:
-            current_chunk.extend(turn)
-            current_tokens += turn_tokens
-    
-    # 处理最后一个 chunk
-    if current_chunk:
-        if current_tokens < 40000 and chunks:
-            # 太小，合并到上一个
-            chunks[-1].extend(current_chunk)
-        else:
-            chunks.append(current_chunk)
-    
-    return chunks
-```
+将对话条目分页为多个 chunk。
 
-**对话轮次分组：**
+规则：
+1. 按时间顺序处理，先按轮次分组（`group_into_turns`）
+2. 保持对话轮次完整性（不在轮次中间切分）
+3. 目标大小 90K tokens，硬上限 200K tokens，最小 40K tokens
+4. 单轮次超过 `max_tokens` 时调用 `split_large_turn` 拆分
+5. **M1 修复**：最后一个 chunk 不足 `min_tokens` 时尝试合并到上一页，**合并前先检查不超 `max_tokens`**；超限则保留为独立 chunk
+6. **`truncate_entry` 兜底**：单个 entry 超过 `max_tokens` 时，按 token 预算截断其 text 块（保留比例 + `[...截断...]` 标记）
 
-```python
-def group_into_turns(entries):
-    """
-    将条目按对话轮次分组
-    
-    一个轮次 = 用户消息 + 后续的所有 assistant 消息（直到下一个用户消息）
-    """
-    turns = []
-    current_turn = []
-    
-    for entry in entries:
-        if entry['type'] == 'user' and current_turn:
-            # 新轮次开始
-            turns.append(current_turn)
-            current_turn = [entry]
-        else:
-            current_turn.append(entry)
-    
-    if current_turn:
-        turns.append(current_turn)
-    
-    return turns
-```
+> 源码：`evolution-export.py` 第 511-574 行（`paginate_entries`）、第 438-471 行（`truncate_entry`）、第 474-508 行（`split_large_turn`）
 
-**Token 估算：**
+**`group_into_turns(entries) -> list[list[ConversationEntry]]`**
 
-```python
-def estimate_tokens(text):
-    """
-    粗略估算文本的 token 数
-    
-    规则：
-    - 英文/代码：约 4 字符/token
-    - 中文：约 1.0 字符/token（v3.3.0 修正，原 1.5）
-    - 混合内容：加权计算
-    - 更精确的方法：统计中文字符比例，加权计算
-    """
-    if not text:
-        return 0
-    
-    # 统计中文字符比例
-    chinese_chars = sum(1 for c in text if '\u4e00' <= c <= '\u9fff')
-    total_chars = len(text)
-    
-    if total_chars == 0:
-        return 0
-    
-    chinese_ratio = chinese_chars / total_chars
-    
-    # 加权计算
-    # 中文部分：1.0 字符/token（v3.3.0 修正）
-    # 非中文部分：4 字符/token
-    chinese_tokens = chinese_chars / 1.0
-    non_chinese_tokens = (total_chars - chinese_chars) / 4
-    
-    return int(chinese_tokens + non_chinese_tokens)
-```
+将条目按对话轮次分组：一个轮次 = 用户消息 + 后续所有 assistant 消息（直到下一个 user 消息）。
+
+> 源码：`evolution-export.py` 第 415-435 行
+
+**`estimate_tokens(text) -> int`**
+
+粗略估算文本 token 数。
+
+- 英文/代码：约 4 字符/token
+- CJK/全角：约 1.0 字符/token（v3.3.0 由 1.5 下调，修正系统性偏低）
+- **`is_wide_char()` 覆盖范围**（v3.8.0 扩展）：CJK 统一汉字、CJK 扩展 A、CJK 兼容汉字、日文假名、韩文音节、全角字符，并以 `unicodedata.east_asian_width()` 兜底判断 `W`/`F`
+- 加权计算：`wide_tokens + narrow_tokens`
+
+> 源码：`evolution-export.py` 第 362-399 行（`is_wide_char` + `estimate_tokens`）
 
 ### 4.5 chunk 文件格式
 
-**chunk Markdown 格式：**
+**chunk Markdown 格式（v3.8.0）：**
 
-```markdown
+- 标题：`# 对话历史导出 - Chunk {idx}/{total}`
+- 元信息块：时间范围、估算 tokens、对话条目数
+- 每条 entry：`## [Entry N] {timestamp}` + `### {Role}:`
+- **所有原始文本用 fenced code 包裹**（`_wrap_code_block`），防止 markdown 注入（M11）；fence 长度根据文本中最长反引号序列动态确定（`_fence`，至少 3 个反引号）
+- 块类型标签：`[text]`、`[thinking]`、`[tool_result]`（错误加 `(error)`）；`tool_use` 不加标签直接包裹
+
+> 旧格式 `## [Turn N]` + `### User:` + 原始文本已废弃；v3.8.0 改为 `## [Entry N]` 并用 fenced code 包裹所有文本。
+
+示例：
+
+````markdown
 # 对话历史导出 - Chunk 0/5
 
-> 时间范围：<date-range>
+> 时间范围：2026-06-29 14:41 ~ 2026-07-01 10:30
 > 估算 tokens：~90,000
-> 对话轮次：15
+> 对话条目：15
 
 ---
 
-## [Turn 1] <timestamp>
+## [Entry 1] 2026-06-29 14:41:58
 
 ### User:
+
+[text]
+```text
 你觉得这个项目从第一原则来看，有什么问题？
+```
+
+---
+
+## [Entry 2] 2026-06-29 14:42:30
 
 ### Assistant:
-[thinking]
-从第一性原理来看，这个项目有几个关键问题需要考虑...
 
+[thinking]
+```text
+从第一性原理来看，这个项目有几个关键问题需要考虑...
+```
+
+[tool_use]
+```text
 [Tool: Bash]
 Command: ls -la <project-root>/
+```
 
-[Tool Result]
-total 228
-drwxr-xr-x 1 user 1000 0 Jul 29 23:00 ./
-...
-
+[text]
+```text
 我现在来分析这个项目的结构...
+```
 
 ---
+````
 
-## [Turn 2] <timestamp>
-
-### User:
-那我们怎么改进？
-
-### Assistant:
-...
-```
+> 源码：`evolution-export.py` 第 596-641 行（`turn_to_markdown`）、第 581-593 行（`_fence` + `_wrap_code_block`）
 
 ### 4.6 状态管理
 
-**sync-state.json 完整结构：**
+**sync-state.json 完整结构（v3.8.0）：**
 
-> 注：其中 `version` 字段记录 sync-state 数据结构 / 导出逻辑的版本号，跟随导出方案版本同步更新（当前 3.8.0），用于后续版本的旧状态迁移；它与文档版本号同值但语义独立。
+> 注：`version` 字段记录 sync-state 数据结构 / 导出逻辑的版本号（当前 3.4.0），用于后续版本的旧状态迁移；它与文档版本号语义独立。
 
 ```json
 {
-  "version": "3.8.0",
-  "project_path": "<project-root>",
-  "jsonl_path": "~/.claude/projects/<project-hash>/<session-uuid>.jsonl",
-  "last_sync": {
-    "timestamp": "<timestamp>",
-    "line_number": 5000,
-    "uuid": "abc-123-...",
-    "session_id": "<session-uuid>"
-  },
-  "file_info": {
-    "size_bytes": 10000000,
-    "line_count": 5000,
-    "last_modified": "<timestamp>"
-  },
-  "stats": {
-    "total_exports": 2,
-    "full_exports": 1,
-    "incremental_exports": 1,
-    "total_entries_processed": 5382,
-    "total_knowledge_extracted": 26
-  },
-  "export_history": [
-    {
-      "type": "full",
-      "timestamp": "<timestamp>",
-      "duration_seconds": 180,
-      "chunks_analyzed": 3,
-      "entries_processed": 5000,
-      "knowledge_items_extracted": 23,
-      "tokens_estimated": 371000
-    },
-    {
-      "type": "incremental",
-      "timestamp": "<timestamp>",
-      "duration_seconds": 30,
-      "chunks_analyzed": 1,
-      "entries_processed": 150,
-      "knowledge_items_extracted": 3,
-      "tokens_estimated": 35000
+  "version": "3.4.0",
+  "last_full_sync": "2026-07-30T11:38:00",
+  "last_incremental_sync": "2026-07-30T15:00:00",
+  "project_hash": "<project-hash>",
+  "files": {
+    "~/.claude/projects/<project-hash>/xxx.jsonl": {
+      "path": "~/.claude/projects/<project-hash>/xxx.jsonl",
+      "sha256": "abc123...",
+      "mtime": 1753867200.0,
+      "total_lines": 5232,
+      "processed_lines": 5232,
+      "processed_bytes": 14227502,
+      "last_event_timestamp": "2026-07-30T03:39:21.771Z"
     }
-  ]
+  }
 }
 ```
+
+字段说明：
+
+| 字段 | 说明 |
+|------|------|
+| `version` | 数据结构版本号 |
+| `last_full_sync` | 最近一次全量导出时间（ISO，首次为 `null`） |
+| `last_incremental_sync` | 最近一次增量导出时间（ISO，未增量为 `null`） |
+| `project_hash` | `compute_project_hash` 计算的项目 hash |
+| `files` | 按文件路径键的 `FileInfo` 字典 |
+| `files[k].sha256` | 文件内容 SHA256 |
+| `files[k].mtime` | 文件修改时间 |
+| `files[k].total_lines` | 文件物理行总数 |
+| `files[k].processed_lines` | 已处理的最后一条 entry 的真实行号（增量游标） |
+| `files[k].processed_bytes` | 已处理字节数 |
+| `files[k].last_event_timestamp` | 最后一条 entry 的时间戳 |
+
+> 旧结构（`last_sync` / `file_info` / `stats` / `export_history`）已废弃。不再维护 `export-log.json`，导出统计由调用方（Sub Agent）汇总。
+
+> 源码：`evolution-export.py` 第 648-679 行（`file_info_to_dict` / `state_to_dict` / `_empty_state`）、第 112-131 行（`FileInfo` / `SyncState` dataclass）、第 682-727 行（`load_sync_state`，含 schema 校验）
 
 ### 4.7 Windows 兼容性
 
 **关键兼容性处理：**
 
-1. **路径分隔符**：脚本内部统一使用 `os.path.join()` 和 `os.path.sep`，不硬编码 `/` 或 `\`
-2. **home 目录**：使用 `os.path.expanduser("~")` 而非 `$HOME`
-3. **编码**：文件读写显式指定 `encoding='utf-8'`
-4. **换行符**：写入文件时使用 `newline='\n'` 统一为 Unix 风格
-5. **Python 路径**：不假设 `python3`，使用 `python`（Windows 默认），或从环境检测
-6. **Bash 路径**：在 Git Bash 环境中，`~` 可正常展开；在 cmd/PowerShell 中需要用 `%USERPROFILE%`
+1. **路径分隔符**：用 `pathlib.Path` / `os.path` 拼接，不硬编码 `/` 或 `\`
+2. **home 目录**：用 `Path.home()` 定位 `~/.claude/projects`
+3. **编码**：文件读写显式指定 `encoding='utf-8'`，并用 `errors='replace'` 容错
+4. **stdout/stderr 编码**：Windows 下 `_reconfigure_stdio()` 强制 stdout/stderr 使用 UTF-8，避免 GBK 编码崩溃
+5. **Python 路径**：不假设 `python3`，使用 `python`（Windows 默认）
+6. **文件锁跨平台**：Windows 用 `msvcrt.locking`，Linux/macOS 用 `fcntl.flock`（见 4.9）
 
-```python
-def get_python_executable():
-    """获取可用的 Python 可执行文件"""
-    import sys
-    # 直接返回当前 Python
-    return sys.executable
-
-def get_home_dir():
-    """获取用户 home 目录，兼容 Windows"""
-    import os
-    return os.path.expanduser("~")
-```
+> 源码：`evolution-export.py` 第 1059-1065 行（`_reconfigure_stdio`）、第 750-800 行（跨平台文件锁）
 
 ### 4.8 错误处理与降级
 
 **错误处理矩阵：**
 
-| 错误场景 | 检测方式 | 处理策略 | 降级方案 |
-|----------|----------|----------|----------|
-| JSONL 文件不存在 | `os.path.exists()` | 返回错误信息 | 提示用户检查 Claude Code 是否正常运行 |
-| JSONL 文件为空 | 文件大小为 0 | 返回空结果 | 提示"无对话历史" |
-| JSONL 解析失败 | `try/except JSONDecodeError` | 跳过坏行，计数 | 返回部分结果 + 警告 |
-| sync-state.json 损坏 | JSON 解析失败 | 视为首次运行 | 执行全量导出 |
-| 磁盘空间不足 | `shutil.disk_usage()` | 提前检查 | 提示用户清理空间 |
-| Python 版本过低 | `sys.version_info` | 检查 >= 3.8 | 提示升级 |
-| chunk 文件写入失败 | `try/except IOError` | 重试一次 | 返回错误，不中断已有结果 |
-| 项目路径无法匹配 | 路径发现失败 | 列出所有候选目录 | 让用户手动指定 JSONL 路径 |
+| 错误场景 | 处理策略 |
+|----------|----------|
+| 项目路径不存在 / 非字符串 | `--mode full/incremental` 前置 `os.path.isdir` 检查 + `_validate_str` 抛 `ValueError` |
+| JSONL 文件不存在 | `find_jsonl_file` 返回空列表，导出返回 `{"status":"error","message":"未找到 JSONL 文件"}` |
+| JSONL 单行解析失败 | 跳过坏行，打印 `[WARN]` 到 stderr |
+| sync-state.json 损坏 / 类型不符 | `load_sync_state` 回退到空状态（`_empty_state`） |
+| 文件消费不一致 | `discovered_files != parsed_files` 时返回错误（见 4.9） |
+| 获取文件锁超时 | `file_lock` 抛 `TimeoutError`（默认 120s） |
+| 未捕获异常 | `main` 兜底捕获，输出结构化 JSON 错误 + `[ERROR]` 到 stderr，退出码 1 |
 
-**降级模式设计：**
+> 源码：`evolution-export.py` 第 807-811 行（`_validate_str`）、第 682-727 行（`load_sync_state` 容错）、第 1109-1118 行（`main` 兜底异常）
 
-```python
-def export_with_fallback(project_path, mode='full'):
-    """
-    带降级的导出流程
-    
-    降级链：
-    1. 正常模式：完整解析 + 分页 + 分析
-    2. 降级1：跳过 thinking/tool_result，只保留 text
-    3. 降级2：只保留 user text + assistant text
-    4. 降级3：只读取最后 N 行（最近的对话）
-    5. 降级4：返回错误，建议用户手动导出
-    """
-    try:
-        # 正常模式
-        return export_full(project_path, mode)
-    except TokenLimitExceeded:
-        try:
-            # 降级1：更激进的过滤
-            return export_with_aggressive_filter(project_path, mode)
-        except TokenLimitExceeded:
-            try:
-                # 降级2：只保留 text
-                return export_text_only(project_path, mode)
-            except Exception:
-                # 降级3：只读最近对话
-                return export_recent_only(project_path, lines=500)
-```
+> 注：旧文档的 `export_with_fallback` 多级降级链（token 超限逐级丢弃内容）在实际代码中不存在；实际通过 `paginate_entries` 分页 + `truncate_entry` 截断兜底控制单 chunk 大小，无需运行时降级。
+
+### 4.9 验证与并发安全（v3.8.0 新增）
+
+v3.8.0 引入两项正确性保障：
+
+**1. 文件消费一致性校验**
+
+全量 / 增量导出在解析完所有 JSONL 文件后，校验 `discovered_files`（`find_jsonl_file` 发现的）与 `parsed_files`（实际解析的）集合相等。不一致时返回 `status=error`（含 `discovered_files` / `parsed_files` 字段），避免静默漏处理文件。
+
+> 源码：`evolution-export.py` 第 858-865 行（`export_full`）、第 976-983 行（`export_incremental`）
+
+**2. 跨进程文件锁 `file_lock`**
+
+导出全程持有 `.evolution/chunks/export.lock`，防止多个进程并发导出导致 `sync-state.json` 损坏或 chunk 文件冲突。
+
+- Windows：`msvcrt.locking`（`LK_NBLCK` 非阻塞尝试，循环至超时）
+- Linux/macOS：`fcntl.flock`（`LOCK_EX | LOCK_NB`）
+- 超时默认 120s（`LOCK_TIMEOUT`），超时抛 `TimeoutError`
+- `contextmanager` 保证进程退出时自动释放
+
+> 源码：`evolution-export.py` 第 750-800 行（`file_lock`）、第 83 行（`LOCK_TIMEOUT` 常量）、第 830 / 923 / 1041 行（三处 `with file_lock(...)` 调用点）
 
 ---
 
@@ -1111,12 +793,12 @@ def export_with_fallback(project_path, mode='full'):
 | 项目 | Token 数 | 说明 |
 |------|----------|------|
 | JSONL 解析 + 分页 | 0 | Python 本地执行，不消耗 LLM token |
-| chunk 文件内容 | 371K | 3 个 chunk x ~124K avg |
+| chunk 文件内容（实际消耗） | ~371K 估算 / 实际约 600K-900K | 5-6 个 chunk × 90K 估算（140-150K 实际） |
 | 分析指令（每 chunk） | ~8K | 提取知识的标准 prompt |
 | 知识库读取（每 chunk） | ~10K | kb-index.md + 2-3 个详情文件 |
 | 知识库写入（每 chunk） | ~10K | 写入提取的知识 |
-| **单 chunk 总消耗** | ~152K | 内容 + 指令 + 读写 |
-| **全量总消耗** | ~456K | 3 chunks x 152K |
+| **单 chunk 总消耗** | ~152K（按估算口径计） | 内容 + 指令 + 读写 |
+| **全量总消耗** | ~760K-912K | 5-6 chunks x ~152K |
 
 **增量导出（日常）：**
 
@@ -1130,32 +812,31 @@ def export_with_fallback(project_path, mode='full'):
 
 | 场景 | Input Token | Output Token | 成本 |
 |------|-------------|--------------|------|
-| 全量导出（首次） | ~400K | ~56K | ~$1.60 |
+| 全量导出（首次） | ~651K-803K | ~109K | ~$3.56 |
 | 增量导出（每次） | ~55K | ~16K | ~$0.40 |
-| 月度（1 次全量 + 4 次增量） | - | - | ~$3.20 |
+| 月度（1 次全量 + 4 次增量） | - | - | ~$5.16 |
 
 ### 5.2 时间成本
 
 | 场景 | 耗时 | 说明 |
 |------|------|------|
-| Python 脚本执行（全量） | ~3 秒 | 解析 ~10MB JSONL |
+| Python 脚本执行（全量） | ~3 秒 | 解析 14MB JSONL |
 | Python 脚本执行（增量） | ~1 秒 | 解析新增行 |
-| Sub Agent 分析（每 chunk） | ~60-90 秒 | 读取 + 分析 + 写入（90K 内容） |
-| 全量导出（3 chunks） | ~3-4 分钟 | 串行分析 |
+| Sub Agent 分析（每 chunk） | ~60-90 秒 | 读取 + 分析 + 写入（90K 估算 / 140-150K 实际内容） |
+| 全量导出（5-6 chunks） | ~5-9 分钟 | 串行分析 |
 | 增量导出（1 chunk） | ~1-2 分钟 | 单次分析 |
-| 总全量导出 | ~3-5 分钟 | 含脚本 + 分析 |
+| 总全量导出 | ~5-10 分钟 | 含脚本 + 分析 |
 | 总增量导出 | ~1-2 分钟 | 含脚本 + 分析 |
 
 ### 5.3 存储成本
 
 | 项目 | 大小 | 说明 |
 |------|------|------|
-| chunk 临时文件 | ~1.1 MB | 3 个 chunk x ~370KB（~124K avg token x ~3 chars/token） |
+| chunk 临时文件 | ~2 MB | 5-6 个 chunk x ~300-400KB（90K 估算 tokens，CJK 密集内容约 1.0 字符/估算 token） |
 | sync-state.json | ~2 KB | 状态文件 |
-| export-log.json | ~5 KB | 日志文件 |
 | 知识库增长（全量） | ~10-20 KB | 8 个 .md 文件 |
 | 知识库增长（每次增量） | ~2-5 KB | 新增条目 |
-| **总存储开销** | ~1.1 MB | 主要是 chunk 临时文件 |
+| **总存储开销** | ~2 MB | 主要是 chunk 临时文件 |
 
 ---
 
@@ -1174,8 +855,8 @@ Phase 1: 核心脚本（evolution-export.py）
 
 Phase 2: 状态管理
   ├── 2.1 sync-state.json 读写
-  ├── 2.2 增量游标逻辑
-  └── 2.3 export-log.json 记录
+  ├── 2.2 增量游标逻辑（per-file processed_lines）
+  └── 2.3 文件锁与一致性校验（v3.8.0）
 
 Phase 3: SKILL.md 集成
   ├── 3.1 更新 SKILL.md 添加 export 命令
@@ -1199,7 +880,7 @@ Phase 5: 测试与优化
 | 验收项 | 标准 | 验证方法 |
 |--------|------|----------|
 | 路径发现 | 能正确发现当前项目的 JSONL 文件 | `python evolution-export.py --mode status` |
-| 全量导出 | 生成 2-4 个 chunk 文件，总 token ~371K | 检查 `.evolution/chunks/` 目录 |
+| 全量导出 | 生成 5-6 个 chunk 文件，总 token ~371K（估算口径） | 检查 `.evolution/chunks/` 目录 |
 | 内容过滤 | 丢弃 metadata 条目，保留 user/assistant | 检查 chunk 文件内容 |
 | 分页正确性 | 每个 chunk 在 40K-200K token 之间 | 检查 chunk 文件头部的 token 估算 |
 | 增量识别 | 正确识别新增行数 | 修改 JSONL 后运行增量导出 |
@@ -1214,7 +895,7 @@ Phase 5: 测试与优化
 | 风险 | 概率 | 影响 | 缓解措施 |
 |------|------|------|----------|
 | JSONL 格式变化 | 中 | 高 | 解析器容错设计，跳过无法解析的行 |
-| 路径编码不匹配 | 中 | 高 | 多候选匹配 + 目录扫描兜底 |
+| 路径编码不匹配 | 低 | 高 | compute_project_hash 编码匹配 + 未找到时返回空列表并警告 |
 | Token 估算不准 | 高 | 中 | 留 20% 余量（目标 90K，上限 200K） |
 | 知识提取质量低 | 中 | 高 | 人工审核机制（[D] 标记）+ 优化 prompt |
 | Sub Agent 上下文溢出 | 低 | 高 | 分页大小保守估计 + 降级模式 |
@@ -1317,9 +998,11 @@ Sub Agent 执行：
     │    {
     │      "status": "success",
     │      "chunks": [
-    │        {"file": ".evolution/chunks/chunk-0.md", "tokens_est": 90000},
-    │        {"file": ".evolution/chunks/chunk-1.md", "tokens_est": 90000},
-    │        {"file": ".evolution/chunks/chunk-2.md", "tokens_est": 71000}
+    │        {"file": ".evolution/chunks/chunk-00.md", "tokens_est": 90000},
+    │        {"file": ".evolution/chunks/chunk-01.md", "tokens_est": 90000},
+    │        {"file": ".evolution/chunks/chunk-02.md", "tokens_est": 90000},
+    │        {"file": ".evolution/chunks/chunk-03.md", "tokens_est": 90000},
+    │        {"file": ".evolution/chunks/chunk-04.md", "tokens_est": 11000}
     │      ],
     │      "sync_state": {...}
     │    }
@@ -1339,8 +1022,8 @@ Sub Agent 执行：
     │
     └─ Step 4: 返回摘要
        "全量导出完成：
-        - 处理 ~5,000 条记录
-        - 分析 3 个分页
+        - 处理 5,232 条记录
+        - 分析 5-6 个分页
         - 提取 23 条知识（8 事实 / 5 踩坑 / 3 状态 / 4 学习 / 1 Prompt / 2 决策）
         - 全部标记为 [D]
         - 建议审核：..."
@@ -1368,12 +1051,12 @@ Sub Agent 执行：
     │      "mode": "incremental",
     │      "new_entries": 150,
     │      "chunks": [
-    │        {"file": ".evolution/chunks/chunk-inc-0.md", "tokens_est": 35000}
+    │        {"file": ".evolution/chunks/chunk-inc-00.md", "tokens_est": 35000}
     │      ]
     │    }
     │
     ├─ Step 2: 分析增量 chunk
-    │  - 读取 chunk-inc-0.md
+    │  - 读取 chunk-inc-00.md
     │  - 读取 kb-index.md
     │  - 分析 + 提取 + 去重 + 写入
     │
@@ -1396,10 +1079,10 @@ Sub Agent 执行：
 
 | 方案 | 优点 | 缺点 |
 |------|------|------|
-| AI 直接读 JSONL | 无需脚本 | ~10MB 文件远超上下文；JSON 噪声多；无法分页 |
+| AI 直接读 JSONL | 无需脚本 | 14MB 文件远超上下文；JSON 噪声多；无法分页 |
 | Python 脚本预处理 | 精确控制过滤/分页；不消耗 token；可复用 | 需要维护脚本 |
 
-**决策：Python 脚本预处理。** 原因：~10MB / 716K tokens 的原始数据无法直接放入 1M 上下文窗口（合成任务有效上下文仅 200-300K），必须预处理。
+**决策：Python 脚本预处理。** 原因：14MB / 716K tokens 的原始数据无法直接放入 1M 上下文窗口（合成任务有效上下文仅 200-300K），必须预处理。
 
 ### 9.2 为什么分页目标是 90K 而不是更接近 1M？
 
@@ -1421,8 +1104,8 @@ Sub Agent 执行：
 
 - timestamp 可能不唯一（同一秒多条记录）
 - timestamp 可能乱序（极少数情况）
-- line_number 是严格递增的，唯一且有序
-- 但 line_number 在文件被重写时可能失效，所以同时记录 uuid 和 timestamp 作为校验
+- 行号是严格递增的，唯一且有序（实际字段为 `FileInfo.processed_lines`，按文件记录最后一条 entry 的真实行号）
+- 单一行号在文件被整体重写时可能失效，所以同时记录 `sha256` / `mtime` / `last_event_timestamp` 作为校验（见 4.6）
 
 ### 9.5 为什么不过滤掉 tool_use 和 tool_result？
 
